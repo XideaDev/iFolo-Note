@@ -6,6 +6,24 @@
         <description>iFolo Note macOS 最新版本与安全修复发布频道</description>
         <language>zh-CN</language>
         <item>
+            <title>iFolo Note v0.3.0</title>
+            <pubDate>Sun, 18 Oct 2026 12:46:01 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>### iFolo Note v0.3.0 (硬件级安全闭环与全屏磨砂锁屏)
+- **全屏半透明磨砂解锁屏**：升级为全局全屏毛玻璃覆盖，私密安全感沉浸拉满；
+- **硬件机器码 HKDF 派生密钥**：使用设备唯一标识 (IOPlatformUUID) 结合 HKDF-SHA256 派生 AES-256 主密钥，彻底消除 macOS 钥匙串授权弹窗；
+- **锁屏品牌色微交互体系**：融合品牌蓝双色渐变与 Apple 风格胶囊输入容器，支持密码错误时 macOS 经典水平震颤摇摆动画；
+- **锁屏安全回退通道**：全屏左上角悬浮「全部笔记」快速返回按钮，支持按 Esc 键随时安全退出锁屏，绝不陷进交互死胡同；
+- **应用启动锁屏层叠异常修复**：修复上次停留加密笔记时，App 重新启动误展示全屏锁屏的 Bug，确保始终稳定呈现主页「全部笔记」列表；
+- **安全会话控制闭锁失效修复**：打通设置中「立即闭锁所有私密笔记」与前端主界面的事件链路，立即物理销毁内存密钥并清空所有未授权视图缓存；
+- **双通道认证逻辑解耦**：用户输入独立密码按回车直接回传原生端秒级解密，彻底免除再次唤起 Touch ID 弹窗的冗余循环；
+- **菜单栏右键偏好设置优化**：阻断 AppKit 自动注入齿轮图标，纯文字与「新建笔记」「全部笔记」完全对齐一致。</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.3.0/iFolo-0.3.0-arm64.dmg" length="1996345" type="application/octet-stream" sparkle:edSignature="oDZ7tOr+q1+QWuln/091l3A4QacNo1lvm3C6jT0k5/WYHnio8KURXnJGUAesKAovtsQYw7KPNcBcOylhUrCzCA==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.3.0/iFolo-0.3.0-x86_64.dmg" length="2014623" type="application/octet-stream" sparkle:edSignature="I9H1qon4+mBDR06EWvd0cX03M5qEc2E0CuBJIz5KUoLQm3X+AlW/jTXrxqwM/9ILjYa/ENX5IV0vxSmoSrFuAw==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+        <item>
             <title>iFolo Note v0.2.0</title>
             <pubDate>Sun, 18 Oct 2026 10:40:48 +0000</pubDate>
             <sparkle:version>2</sparkle:version>
