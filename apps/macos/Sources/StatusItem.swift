@@ -208,7 +208,7 @@ final class StatusItem: NSObject {
         let cmdPaletteItem = menu.addItem(withTitle: "命令面板", action: #selector(openCommandPalette), keyEquivalent: "k")
         cmdPaletteItem.keyEquivalentModifierMask = [.command]
         cmdPaletteItem.target = self
-        let settingsItem = menu.addItem(withTitle: "偏好设置...", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = menu.addItem(withTitle: "偏好设置", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.keyEquivalentModifierMask = [.command]
         settingsItem.target = self
 
