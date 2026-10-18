@@ -138,9 +138,62 @@ final class UpdateManager: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverDe
 
     /// 更新检查或下载异常中止
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
+        let nsError = error as NSError
+        if nsError.domain == SUSparkleErrorDomain {
+            let code = OSStatus(nsError.code)
+            // SUNoUpdateError (1001)：未发现新版本，Sparkle 会以此信号结束检测流程，属于正常行为
+            if code == SUError.noUpdateError.rawValue {
+                currentState = .upToDate
+                Log.write("Sparkle 检查完成：当前已是最新版本 (SUNoUpdateError)")
+                broadcastState(status: .upToDate)
+                return
+            }
+
+            // SUInstallationCanceledError (4007)：用户手动取消了更新
+            if code == SUError.installationCanceledError.rawValue {
+                currentState = .idle
+                Log.write("Sparkle 更新流程已取消")
+                broadcastState(status: .idle)
+                return
+            }
+        }
+
+        // 如果之前已被 updaterDidNotFindUpdate 标记为最新版本，避免被后续中止信号覆盖为 error
+        if currentState == .upToDate {
+            Log.write("Sparkle 检测流程正常闭环（保持最新状态）")
+            return
+        }
+
         currentState = .error
-        Log.write("Sparkle 更新中止或异常: \(error.localizedDescription)")
-        broadcastState(status: .error, errorMessage: error.localizedDescription)
+        let friendlyMsg = friendlyErrorMessage(for: nsError)
+        Log.write("Sparkle 更新中止或异常: \(friendlyMsg) (原始: \(error.localizedDescription), code: \(nsError.code))")
+        broadcastState(status: .error, errorMessage: friendlyMsg)
+    }
+
+    private func friendlyErrorMessage(for nsError: NSError) -> String {
+        if nsError.domain == SUSparkleErrorDomain {
+            switch OSStatus(nsError.code) {
+            case SUError.noUpdateError.rawValue:
+                return "已是最新版本"
+            case SUError.installationCanceledError.rawValue:
+                return "已取消更新"
+            case SUError.appcastError.rawValue, SUError.appcastParseError.rawValue:
+                return "无法解析更新订阅源或网络超时，请检查网络"
+            case SUError.downloadError.rawValue:
+                return "下载更新安装包失败，请检查网络连接"
+            case SUError.signatureError.rawValue, SUError.validationError.rawValue:
+                return "更新安装包签名验证失败"
+            case SUError.installationError.rawValue:
+                return "安装更新失败，请检查权限"
+            case SUError.runningFromDiskImageError.rawValue:
+                return "请先将 iFolo 拖入“应用程序”目录后再检查更新"
+            case SUError.runningTranslocated.rawValue:
+                return "应用处于只读隔离模式，请从“应用程序”目录启动"
+            default:
+                break
+            }
+        }
+        return nsError.localizedDescription
     }
 
     /// 即将开始下载更新包
@@ -202,11 +255,10 @@ final class UpdateManager: NSObject, SPUUpdaterDelegate, SPUStandardUserDriverDe
             if let version = version { payload["latestVersion"] = version }
             if let releaseNotes = releaseNotes { payload["releaseNotes"] = releaseNotes }
             if let errorMessage = errorMessage { payload["errorMessage"] = errorMessage }
-            if let date = self.lastUpdateCheckDate {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-                payload["lastChecked"] = formatter.string(from: date)
-            }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let date = self.lastUpdateCheckDate ?? Date()
+            payload["lastChecked"] = formatter.string(from: date)
 
             guard let jsonData = try? JSONSerialization.data(withJSONObject: payload),
                   let jsonString = String(data: jsonData, encoding: .utf8) else { return }

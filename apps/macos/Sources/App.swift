@@ -19,6 +19,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        UserDefaults.standard.register(defaults: [
+            "AppleLanguages": ["zh-Hans", "zh_CN", "en"]
+        ])
+
         let app = NSApplication.shared
         // NSApplication.delegate 是 weak，必须自己持有强引用
         let delegate = AppDelegate()
@@ -50,6 +54,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.rotateIfNeeded()
         Log.write("──────── iFolo 启动 v\(Self.version) ────────")
+        Log.write("语言偏好: preferred=\(Bundle.main.preferredLocalizations), localizations=\(Bundle.main.localizations)")
         if let iconURL = Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
            let appIcon = NSImage(contentsOf: iconURL) {
             NSApp.applicationIconImage = appIcon
@@ -70,6 +75,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 监听跨进程分布式通知（支持 MCP CLI、外部脚本触发的数据变动）通知前端实时刷新
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("iFoloDataChangedExternally"), object: nil, queue: .main) { _ in
             PanelController.shared.evaluate("window.__ifoloRefreshNotes && window.__ifoloRefreshNotes()")
+        }
+
+        DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name("iFoloCheckForUpdates"), object: nil, queue: .main) { _ in
+            UpdateManager.shared.checkForUpdates()
         }
 
         // 预热本地向量检索引擎

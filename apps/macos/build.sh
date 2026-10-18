@@ -57,6 +57,11 @@ cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 if [ -f "$ROOT/Resources/AppIcon.icns" ]; then
   cp "$ROOT/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 fi
+for lproj in "$ROOT"/Resources/*.lproj; do
+  if [ -d "$lproj" ]; then
+    cp -R "$lproj" "$APP/Contents/Resources/"
+  fi
+done
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 echo "[3/5] embedding editor bundle"
