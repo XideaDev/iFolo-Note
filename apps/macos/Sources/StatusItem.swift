@@ -208,12 +208,13 @@ final class StatusItem: NSObject {
         let cmdPaletteItem = menu.addItem(withTitle: "命令面板", action: #selector(openCommandPalette), keyEquivalent: "k")
         cmdPaletteItem.keyEquivalentModifierMask = [.command]
         cmdPaletteItem.target = self
+        let settingsItem = menu.addItem(withTitle: "偏好设置...", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.keyEquivalentModifierMask = [.command]
+        settingsItem.target = self
 
         menu.addItem(.separator())
 
         menu.addItem(withTitle: "关于 iFolo", action: #selector(showAbout), keyEquivalent: "")
-            .target = self
-        menu.addItem(withTitle: "检查更新...", action: #selector(checkForUpdates), keyEquivalent: "")
             .target = self
 
 
@@ -253,7 +254,12 @@ final class StatusItem: NSObject {
 
     @objc private func openNoteList() {
         PanelController.shared.show()
-        PanelController.shared.evaluate("window.__ifoloToggleList && window.__ifoloToggleList()")
+        PanelController.shared.evaluate("window.__ifoloOpenList ? window.__ifoloOpenList() : (window.__ifoloToggleList && window.__ifoloToggleList())")
+    }
+
+    @objc private func openSettings() {
+        PanelController.shared.show()
+        PanelController.shared.evaluate("window.__ifoloSettings && window.__ifoloSettings()")
     }
 
     @objc private func openCommandPalette() {
@@ -263,8 +269,5 @@ final class StatusItem: NSObject {
 
     @objc private func showAbout() {
         AboutWindowController.shared.show()
-    }
-    @objc private func checkForUpdates() {
-        UpdateManager.shared.checkForUpdates()
     }
 }

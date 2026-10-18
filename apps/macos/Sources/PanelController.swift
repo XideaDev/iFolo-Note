@@ -95,7 +95,10 @@ final class PanelController: NSObject, WKUIDelegate {
 
     private func targetScreen() -> NSScreen {
         let mouseLoc = NSEvent.mouseLocation
-        if let screenUnderMouse = NSScreen.screens.first(where: { NSMouseInRect(mouseLoc, $0.frame, false) }) {
+        if let screenUnderMouse = NSScreen.screens.first(where: {
+            mouseLoc.x >= $0.frame.minX && mouseLoc.x <= $0.frame.maxX &&
+            mouseLoc.y >= $0.frame.minY && mouseLoc.y <= $0.frame.maxY
+        }) {
             return screenUnderMouse
         }
         return NSScreen.screens.first(where: { $0.frame.origin == .zero }) ?? NSScreen.main ?? NSScreen.screens[0]

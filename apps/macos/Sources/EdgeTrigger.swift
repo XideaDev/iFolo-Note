@@ -41,8 +41,10 @@ final class EdgeTrigger {
     func start() {
         stop()
 
-        updateScreenCache()
+        isPaused = false
+        armed = true
 
+        updateScreenCache()
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil,
@@ -53,7 +55,7 @@ final class EdgeTrigger {
 
         // 全局监听不会收到发给本 App 的事件，所以面板内的移动天然被忽略
         // 1. 全局鼠标移动监听
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
             self?.evaluate()
         }
 
@@ -81,11 +83,11 @@ final class EdgeTrigger {
         if let screenObserver {
             NotificationCenter.default.removeObserver(screenObserver)
             self.screenObserver = nil
-            self.screenObserver = nil
         }
         pollTimer?.invalidate()
         pollTimer = nil
         cancelDwell()
+        armed = true
     }
     func pause() {
         isPaused = true
@@ -137,11 +139,13 @@ final class EdgeTrigger {
         for screen in targetScreens {
             let frame = screen.frame
             // 采用屏幕物理矩形 frame（撑满物理高宽），杜绝 visibleFrame 因 Dock 栏或菜单栏位置导致的边缘盲区
+            // 采用屏幕物理矩形 frame（撑满物理高宽），杜绝 visibleFrame 因 Dock 栏或菜单栏位置导致的边缘盲区
+            // 上下及右边缘增加容差，解决 Cocoa NSRect.contains 针对 maxX / maxY 上边界半开区间 [min, max) 导致的顶角与极边缘脱靶问题
             let trigger = NSRect(
                 x: frame.maxX - zoneWidth - 1,
-                y: frame.minY,
-                width: zoneWidth + 2,
-                height: frame.height
+                y: frame.minY - 2,
+                width: zoneWidth + 4,
+                height: frame.height + 4
             )
             zones.append(TriggerZone(screenFrame: frame, triggerRect: trigger))
             if trigger.minX < lowestX {
