@@ -78,13 +78,25 @@ echo "[3.5/5] embedding frameworks"
 mkdir -p "$APP/Contents/Frameworks"
 cp -R "$ROOT/Frameworks/Sparkle.framework" "$APP/Contents/Frameworks/"
 
-echo "[4/5] signing (ad-hoc)"
-codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.Downloader.xpc" 2>/dev/null || true
-codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerConnection.xpc" 2>/dev/null || true
-codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerStatus.xpc" 2>/dev/null || true
-codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate.app" 2>/dev/null || true
-codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework" 2>/dev/null || true
-codesign --force --deep --sign - "$APP" 2>&1 | head -3 || true
+SIGN_IDENTITY=\"-\"
+if security find-identity -v -p codesigning 2>/dev/null | grep -q 'Apple Development:'; then
+  DEV_ID=$(security find-identity -v -p codesigning 2>/dev/null | grep 'Apple Development:' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
+  if [ -n "$DEV_ID" ]; then
+    SIGN_IDENTITY="$DEV_ID"
+    echo "[4/5] signing with '$SIGN_IDENTITY'"
+  else
+    echo "[4/5] signing (ad-hoc fallback)"
+  fi
+else
+  echo "[4/5] signing (ad-hoc fallback)"
+fi
+
+codesign --force --sign "$SIGN_IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.Downloader.xpc" 2>/dev/null || true
+codesign --force --sign "$SIGN_IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerConnection.xpc" 2>/dev/null || true
+codesign --force --sign "$SIGN_IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerStatus.xpc" 2>/dev/null || true
+codesign --force --sign "$SIGN_IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate.app" 2>/dev/null || true
+codesign --force --sign "$SIGN_IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework" 2>/dev/null || true
+codesign --force --deep --sign "$SIGN_IDENTITY" "$APP" 2>&1 | head -3 || true
 echo "[5/5] done"
 SIZE=$(du -sh "$APP" | cut -f1)
 echo "$APP ($SIZE)"

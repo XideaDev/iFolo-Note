@@ -266,7 +266,7 @@ public final class NoteLockManager {
             let newKey = SymmetricKey(size: .bits256)
             let rawData = newKey.withUnsafeBytes { Data($0) }
 
-            let addQuery: [String: Any] = [
+            var addQuery: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrService as String: keychainService,
                 kSecAttrAccount as String: keychainAccount,
@@ -274,6 +274,12 @@ public final class NoteLockManager {
                 kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
             ]
 
+            // 关键优化：配置开放受信任 ACL（SecAccess），避免因 Ad-hoc 或后续重编译哈希改变触发 SecurityAgent 弹窗拦截
+            var access: SecAccess?
+            let desc = "iFolo Master Note Lock Key" as CFString
+            if SecAccessCreate(desc, NSArray(), &access) == errSecSuccess, let access = access {
+                addQuery[kSecAttrAccess as String] = access
+            }
             let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
             if addStatus == errSecSuccess {
                 Log.write("NoteLockManager: 成功在系统钥匙串中生成并持久化主加密密钥")
