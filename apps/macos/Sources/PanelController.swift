@@ -37,7 +37,26 @@ final class PanelController: NSObject, WKUIDelegate {
     private let edgeGap: CGFloat = 0
     private let cornerRadius: CGFloat = 16
 
+    /// 窗口全局置顶状态（Always On Top）
+    var isAlwaysOnTop: Bool {
+        get { UserDefaults.standard.bool(forKey: "ifolo.alwaysOnTop") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "ifolo.alwaysOnTop")
+            updateWindowLevel()
+        }
+    }
+
     private override init() { super.init() }
+
+    func updateWindowLevel() {
+        guard let panel else { return }
+        if isAlwaysOnTop {
+            panel.level = .floating
+        } else {
+            panel.level = .normal
+        }
+        Log.write("面板置顶状态更新: isAlwaysOnTop=\(isAlwaysOnTop), level=\(panel.level.rawValue)")
+    }
 
     // MARK: - 显隐
 
@@ -63,8 +82,8 @@ final class PanelController: NSObject, WKUIDelegate {
         panel.orderFrontRegardless()
         takeKey()
         installOutsideMonitor()
-        webView?.evaluateJavaScript("window.__ifoloRefreshNotes && window.__ifoloRefreshNotes(); window.__ifoloFocus && window.__ifoloFocus()")
-        Log.write("面板显示 frame=\(panel.frame) visible=\(panel.isVisible) key=\(panel.isKeyWindow)")
+        webView?.evaluateJavaScript("window.__ifoloRefreshNotes && window.__ifoloRefreshNotes(); window.__ifoloFocus && window.__ifoloFocus(); window.__ifoloWindowActivated && window.__ifoloWindowActivated();")
+        updateWindowLevel()
     }
 
     func hide() {
@@ -120,6 +139,7 @@ final class PanelController: NSObject, WKUIDelegate {
         panel = window
         webView = web
         loadEditor(into: web)
+        updateWindowLevel()
     }
 
     private func makeWebView(frame: NSRect) -> WKWebView {
@@ -186,10 +206,13 @@ final class PanelController: NSObject, WKUIDelegate {
         outsideMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
         ) { [weak self] _ in
+            guard let self = self else { return }
+            // 全局置顶模式下钉在桌面最前，点击外部不触发收起
+            if self.isAlwaysOnTop { return }
             // 判断是否启用失焦自动隐藏（默认 true，若用户关闭则不收起）
             let autoHide = UserDefaults.standard.object(forKey: "ifolo.autoHide") as? Bool ?? true
             if autoHide {
-                self?.hide()
+                self.hide()
             }
         }
     }

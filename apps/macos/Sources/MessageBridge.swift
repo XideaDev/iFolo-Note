@@ -63,6 +63,7 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 "edgeHoverDelay": UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15,
                 "isVaultUnlocked": NoteLockManager.shared.hasActiveSession,
                 "hasVaultPassword": !(UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                "isAlwaysOnTop": PanelController.shared.isAlwaysOnTop,
                 "updateConfig": [
                     "automaticallyChecksForUpdates": UpdateManager.shared.automaticallyChecksForUpdates,
                     "automaticallyDownloadsUpdates": UpdateManager.shared.automaticallyDownloadsUpdates,
@@ -429,6 +430,17 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 UpdateManager.shared.automaticallyDownloadsUpdates = autoDownload
             }
             reply(id, ok: true, payload: ["success": true])
+
+        case "setAlwaysOnTop":
+            if let enabled = params["enabled"] as? Bool {
+                PanelController.shared.isAlwaysOnTop = enabled
+                Log.write("MessageBridge: 设置全局置顶 \(enabled)")
+            }
+            reply(id, ok: true, payload: PanelController.shared.isAlwaysOnTop)
+
+        case "getAlwaysOnTop":
+            reply(id, ok: true, payload: PanelController.shared.isAlwaysOnTop)
+
         default:
             Log.write("未知方法：\(method)")
             reply(id, ok: false, payload: "未知方法 \(method)")
