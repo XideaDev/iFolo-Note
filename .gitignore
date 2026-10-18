@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# 构建产物
+build/
+dist/
+*.app
+*.dmg
+apps/macos/build/
+
+# 运行时数据 (私有笔记绝不入库)
+local-data/
+*.ifolo-backup
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp

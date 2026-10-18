@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="100%" height="100%" fill="none">
+  <!-- 橙色圆 (左上) -->
+  <circle cx="238" cy="245" r="79.5" fill="#FFA51F"/>
+  <!-- 灰色胶囊 (右上) -->
+  <rect x="370" y="178" width="458" height="140" rx="70" fill="#C3C3C3"/>
+  <!-- 蓝色通栏胶囊 (中部) -->
+  <rect x="188" y="458" width="542" height="140" rx="70" fill="#5CA3FF"/>
+  <!-- 绿色圆 (左下) -->
+  <circle cx="254" cy="772.5" r="79.5" fill="#69CF3D"/>
+</svg>
