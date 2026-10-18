@@ -57,8 +57,8 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 "activeId": activeValue,
                 "content": content,
                 "panelWidth": Double(PanelController.shared.currentWidth),
-                "panelOpacity": UserDefaults.standard.object(forKey: "ifolo.panelOpacity") as? Double ?? 0.82,
-                "cardOpacity": UserDefaults.standard.object(forKey: "ifolo.cardOpacity") as? Double ?? 0.90,
+                "panelOpacity": UserDefaults.standard.object(forKey: "ifolo.panelOpacity") as? Double ?? 1.0,
+                "cardOpacity": UserDefaults.standard.object(forKey: "ifolo.cardOpacity") as? Double ?? 0.40,
                 "statusBarIcon": UserDefaults.standard.string(forKey: "ifolo.statusBarIcon") ?? "notebook",
                 "edgeHoverDelay": UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15,
                 "isVaultUnlocked": NoteLockManager.shared.hasActiveSession,
@@ -73,8 +73,8 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 ],
             ])
             // 恢复透明度配置（面板透明度与卡片透明度独立无级调控）
-            let savedOpacity = UserDefaults.standard.object(forKey: "ifolo.panelOpacity") as? Double ?? 0.82
-            let savedCardOpacity = UserDefaults.standard.object(forKey: "ifolo.cardOpacity") as? Double ?? 0.90
+            let savedOpacity = UserDefaults.standard.object(forKey: "ifolo.panelOpacity") as? Double ?? 1.0
+            let savedCardOpacity = UserDefaults.standard.object(forKey: "ifolo.cardOpacity") as? Double ?? 0.40
             PanelController.shared.evaluate(
                 "document.documentElement.style.setProperty('--panel-opacity', '\(savedOpacity)'); document.documentElement.style.setProperty('--card-opacity', '\(savedCardOpacity)');"
             )

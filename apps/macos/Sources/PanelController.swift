@@ -21,7 +21,7 @@ final class PanelController: NSObject, WKUIDelegate {
     var currentWidth: CGFloat {
         let val = UserDefaults.standard.double(forKey: "ifolo.panelWidth")
         let maxW = maxAllowedWidth()
-        return val >= 320 && val <= maxW ? CGFloat(val) : 432
+        return val >= 320 && val <= maxW ? CGFloat(val) : 450
     }
 
     private var panelWidth: CGFloat {
