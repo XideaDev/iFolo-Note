@@ -435,6 +435,9 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
             if let enabled = params["enabled"] as? Bool {
                 PanelController.shared.isAlwaysOnTop = enabled
                 Log.write("MessageBridge: 设置全局置顶 \(enabled)")
+            } else if let num = params["enabled"] as? NSNumber {
+                PanelController.shared.isAlwaysOnTop = num.boolValue
+                Log.write("MessageBridge: 设置全局置顶 (NSNumber) \(num.boolValue)")
             }
             reply(id, ok: true, payload: PanelController.shared.isAlwaysOnTop)
 

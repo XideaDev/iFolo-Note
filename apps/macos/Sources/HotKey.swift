@@ -119,5 +119,7 @@ enum HotKeyModifier {
 enum KeyCode {
     static let n = UInt32(kVK_ANSI_N)
     static let m = UInt32(kVK_ANSI_M)
+    static let p = UInt32(kVK_ANSI_P)
+    static let l = UInt32(kVK_ANSI_L)
     static let space = UInt32(kVK_Space)
 }

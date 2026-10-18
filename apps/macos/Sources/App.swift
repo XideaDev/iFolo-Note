@@ -127,6 +127,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             Log.write("⌥⌘M 注册失败（可能被占用）")
         }
+
+        // ⌥⌘P 切换窗口置顶
+        if let pin = HotKey(
+            keyCode: KeyCode.p,
+            modifiers: HotKeyModifier.option | HotKeyModifier.cmd,
+            handler: {
+                Log.write("快捷键：切换窗口置顶")
+                PanelController.shared.toggleAlwaysOnTop()
+            }
+        ) {
+            hotKeys.append(pin)
+        } else {
+            Log.write("⌥⌘P 注册失败（可能被占用）")
+        }
+
+        // ⌥⌘L 即时闭锁私密保险箱
+        if let lock = HotKey(
+            keyCode: KeyCode.l,
+            modifiers: HotKeyModifier.option | HotKeyModifier.cmd,
+            handler: {
+                Log.write("快捷键：即时闭锁私密保险箱")
+                NoteLockManager.shared.lockSession()
+                PanelController.shared.evaluate("window.__ifoloLockVault && window.__ifoloLockVault()")
+            }
+        ) {
+            hotKeys.append(lock)
+        } else {
+            Log.write("⌥⌘L 注册失败（可能被占用）")
+        }
     }
 
     /// 附属 App：关掉窗口不能把状态栏图标一起带走

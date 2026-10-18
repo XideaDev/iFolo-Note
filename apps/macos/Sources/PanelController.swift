@@ -58,6 +58,12 @@ final class PanelController: NSObject, WKUIDelegate {
         Log.write("面板置顶状态更新: isAlwaysOnTop=\(isAlwaysOnTop), level=\(panel.level.rawValue)")
     }
 
+    /// 切换窗口全局置顶状态
+    func toggleAlwaysOnTop() {
+        isAlwaysOnTop = !isAlwaysOnTop
+        evaluate("window.__ifoloSyncAlwaysOnTop && window.__ifoloSyncAlwaysOnTop(\(isAlwaysOnTop))")
+    }
+
     // MARK: - 显隐
 
     var isVisible: Bool { panel?.isVisible ?? false }
