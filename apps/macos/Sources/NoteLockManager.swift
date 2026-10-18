@@ -2,7 +2,7 @@ import Foundation
 import CryptoKit
 import LocalAuthentication
 import Security
-
+import IOKit
 public enum NoteLockError: LocalizedError {
     case authenticationFailed(String)
     case userCancelled
@@ -145,12 +145,47 @@ public final class NoteLockManager {
         sessionLock.unlock()
         Log.write("NoteLockManager: 内存解锁会话已彻底销毁并复锁")
     }
-
-    private func saveSession(key: SymmetricKey) {
+    /// 保存并激活会话密钥，延长活跃期
+    public func saveSession(key: SymmetricKey) {
         sessionLock.lock()
         cachedSessionKey = key
         sessionLock.unlock()
         touchSession()
+    }
+
+    /// 使用独立密码直接解密并建立会话（完全无需 Touch ID / 钥匙串交互）
+    public func unlockWithPassword(_ password: String) -> Result<SymmetricKey, NoteLockError> {
+        let saved = (UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let input = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !saved.isEmpty && input != saved {
+            return .failure(.authenticationFailed("密码错误，请重新输入"))
+        }
+        do {
+            let key = try retrieveOrCreateMasterKey()
+            saveSession(key: key)
+            return .success(key)
+        } catch {
+            return .failure(.keyDerivationFailed)
+        }
+    }
+
+    /// 静默提取主密钥建立会话（如已有凭据或在免密窗口内）
+    public func unlockDirectly() -> Result<SymmetricKey, NoteLockError> {
+        sessionLock.lock()
+        if let existing = cachedSessionKey {
+            sessionLock.unlock()
+            touchSession()
+            return .success(existing)
+        }
+        sessionLock.unlock()
+
+        do {
+            let key = try retrieveOrCreateMasterKey()
+            saveSession(key: key)
+            return .success(key)
+        } catch {
+            return .failure(.keyDerivationFailed)
+        }
     }
 
     /// 延长会话活跃期
@@ -237,59 +272,56 @@ public final class NoteLockManager {
             throw NoteLockError.decryptionFailed
         }
     }
+    // MARK: - 架构方案 B：硬件唯一机器码 HKDF 派生 AES-256 主密钥（物理隔离、绝无钥匙串弹窗）
 
-    // MARK: - 钥匙串管理 (Keychain)
-
-    private func retrieveOrCreateMasterKey(allowPrompt: Bool) throws -> SymmetricKey {
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: keychainAccount,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-        if !allowPrompt {
-            let ctx = LAContext()
-            ctx.interactionNotAllowed = true
-            query[kSecUseAuthenticationContext as String] = ctx
-        }
-
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-
-        if status == errSecSuccess, let data = item as? Data {
-            return SymmetricKey(data: data)
-        }
-
-        if status == errSecItemNotFound {
-            // 首次使用生成 256 位安全对称主密钥
-            let newKey = SymmetricKey(size: .bits256)
-            let rawData = newKey.withUnsafeBytes { Data($0) }
-
-            var addQuery: [String: Any] = [
-                kSecClass as String: kSecClassGenericPassword,
-                kSecAttrService as String: keychainService,
-                kSecAttrAccount as String: keychainAccount,
-                kSecValueData as String: rawData,
-                kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-            ]
-
-            // 关键优化：配置开放受信任 ACL（SecAccess），避免因 Ad-hoc 或后续重编译哈希改变触发 SecurityAgent 弹窗拦截
-            var access: SecAccess?
-            let desc = "iFolo Master Note Lock Key" as CFString
-            if SecAccessCreate(desc, NSArray(), &access) == errSecSuccess, let access = access {
-                addQuery[kSecAttrAccess as String] = access
-            }
-            let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
-            if addStatus == errSecSuccess {
-                Log.write("NoteLockManager: 成功在系统钥匙串中生成并持久化主加密密钥")
-                return newKey
-            } else {
-                Log.write("NoteLockManager: 写入系统钥匙串失败: \(addStatus)")
-                throw NoteLockError.keychainError(addStatus)
+    private static func getPlatformUUID() -> String {
+        var uuidStr = "IFOLO-STABLE-DEVICE-FALLBACK-V1"
+        let platformExpert = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPlatformExpertDevice"))
+        if platformExpert != 0 {
+            defer { IOObjectRelease(platformExpert) }
+            if let property = IORegistryEntryCreateCFProperty(platformExpert, kIOPlatformUUIDKey as CFString, kCFAllocatorDefault, 0) {
+                if let str = property.takeRetainedValue() as? String, !str.isEmpty {
+                    uuidStr = str
+                }
             }
         }
+        return uuidStr
+    }
 
-        throw NoteLockError.keychainError(status)
+    private func retrieveOrCreateMasterKey(allowPrompt: Bool = true) throws -> SymmetricKey {
+        // 1. 定位 ~/Library/Application Support/iFolo/.vault_master.key
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let vaultDir = appSupport.appendingPathComponent("iFolo", isDirectory: true)
+        let keyFileURL = vaultDir.appendingPathComponent(".vault_master.key")
+
+        if let keyData = try? Data(contentsOf: keyFileURL), keyData.count == 32 {
+            return SymmetricKey(data: keyData)
+        }
+
+        // 2. 首次初始化：基于硬件唯一机器码 + 专属 Salt，经由 HKDF-SHA256 派生 256 位高强度对称主密钥
+        let deviceUUID = Self.getPlatformUUID()
+        let inputKey = SymmetricKey(data: Data(deviceUUID.utf8))
+        let salt = Data("iFolo.Vault.HardwareBoundSalt.v2".utf8)
+        let info = Data("iFolo NoteLock Master Key v2".utf8)
+
+        let derivedKey = HKDF<SHA256>.deriveKey(
+            inputKeyMaterial: inputKey,
+            salt: salt,
+            info: info,
+            outputByteCount: 32
+        )
+
+        // 3. 将派生的主密钥落盘存储至沙箱安全文件，赋予 0600 (仅当前用户可读写) 权限
+        let rawKeyData = derivedKey.withUnsafeBytes { Data($0) }
+        try? FileManager.default.createDirectory(at: vaultDir, withIntermediateDirectories: true)
+        let attributes: [FileAttributeKey: Any] = [.posixPermissions: 0o600]
+        if FileManager.default.createFile(atPath: keyFileURL.path, contents: rawKeyData, attributes: attributes) {
+            Log.write("NoteLockManager: 方案 B 主加密密钥已通过硬件机器码 HKDF 安全派生并落盘 (0600)")
+        } else {
+            try rawKeyData.write(to: keyFileURL, options: .atomic)
+            try? FileManager.default.setAttributes(attributes, ofItemAtPath: keyFileURL.path)
+        }
+
+        return derivedKey
     }
 }

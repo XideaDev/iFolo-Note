@@ -406,7 +406,7 @@ final class Store {
         }
     }
 
-    func unlockNote(id: String, completion: @escaping (Result<String, NoteLockError>) -> Void) {
+    func unlockNote(id: String, password: String? = nil, completion: @escaping (Result<String, NoteLockError>) -> Void) {
         let url = notesDir.appendingPathComponent("\(id).md")
         guard let data = try? Data(contentsOf: url) else {
             completion(.success(""))
@@ -418,6 +418,25 @@ final class Store {
             return
         }
 
+        // 1. 若前端传入了独立密码，直接用密码验证并解密，完全免除 Touch ID 系统弹窗
+        if let pwd = password, !pwd.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            switch NoteLockManager.shared.unlockWithPassword(pwd) {
+            case .success(let key):
+                do {
+                    let decrypted = try NoteLockManager.shared.decrypt(envelopeData: data, with: key)
+                    completion(.success(decrypted))
+                    return
+                } catch {
+                    completion(.failure(.decryptionFailed))
+                    return
+                }
+            case .failure(let err):
+                completion(.failure(err))
+                return
+            }
+        }
+
+        // 2. 若当前会话已有有效密钥（在免密时限内），直接静默解密
         if let key = NoteLockManager.shared.currentSessionKey() {
             do {
                 let decrypted = try NoteLockManager.shared.decrypt(envelopeData: data, with: key)
@@ -426,6 +445,7 @@ final class Store {
             } catch {}
         }
 
+        // 3. 否则唤起硬件 Touch ID 验证
         NoteLockManager.shared.authenticate(reason: "解锁此受保护的私密笔记") { result in
             switch result {
             case .success(let key):

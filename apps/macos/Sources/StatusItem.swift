@@ -208,7 +208,8 @@ final class StatusItem: NSObject {
         let cmdPaletteItem = menu.addItem(withTitle: "命令面板", action: #selector(openCommandPalette), keyEquivalent: "k")
         cmdPaletteItem.keyEquivalentModifierMask = [.command]
         cmdPaletteItem.target = self
-        let settingsItem = menu.addItem(withTitle: "偏好设置", action: #selector(openSettings), keyEquivalent: ",")
+        let settingsItem = menu.addItem(withTitle: "偏好设置", action: #selector(handleOpenSettings), keyEquivalent: ",")
+        settingsItem.image = nil
         settingsItem.keyEquivalentModifierMask = [.command]
         settingsItem.target = self
 
@@ -257,7 +258,7 @@ final class StatusItem: NSObject {
         PanelController.shared.evaluate("window.__ifoloOpenList ? window.__ifoloOpenList() : (window.__ifoloToggleList && window.__ifoloToggleList())")
     }
 
-    @objc private func openSettings() {
+    @objc private func handleOpenSettings() {
         PanelController.shared.show()
         PanelController.shared.evaluate("window.__ifoloSettings && window.__ifoloSettings()")
     }

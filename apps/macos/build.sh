@@ -50,7 +50,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
   -target "$ARCH-apple-$TARGET_OS" \
   -F "$ROOT/Frameworks" -framework Sparkle \
   -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
-  -framework AppKit -framework WebKit -framework Carbon -framework NaturalLanguage -framework LocalAuthentication -framework CryptoKit -framework Security \
+  -framework AppKit -framework WebKit -framework Carbon -framework NaturalLanguage -framework LocalAuthentication -framework CryptoKit -framework Security -framework IOKit \
   "$ROOT"/Sources/*.swift -o "$APP/Contents/MacOS/iFolo"
 echo "[2/5] writing Info.plist"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"

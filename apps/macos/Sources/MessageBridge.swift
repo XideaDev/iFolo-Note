@@ -353,7 +353,8 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
 
         case "unlockNote":
             guard let noteId = params["id"] as? String else { return reply(id, ok: false, payload: "缺少 id") }
-            Store.shared.unlockNote(id: noteId) { [weak self] result in
+            let password = params["password"] as? String
+            Store.shared.unlockNote(id: noteId, password: password) { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let markdown):
