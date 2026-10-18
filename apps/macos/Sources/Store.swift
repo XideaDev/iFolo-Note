@@ -210,10 +210,18 @@ final class Store {
     func read(id: String) -> String {
         let url = notesDir.appendingPathComponent("\(id).md")
         guard let data = try? Data(contentsOf: url) else { return "" }
-        if NoteLockManager.shared.isEncryptedData(data) {
-            if let key = NoteLockManager.shared.currentSessionKey(),
-               let decrypted = try? NoteLockManager.shared.decrypt(envelopeData: data, with: key) {
-                return decrypted
+        let folderData = loadFolderData()
+        let isLocked = folderData.lockedNotes?[id] == true || folderData.noteFolders[id] == "vault" || NoteLockManager.shared.isEncryptedData(data)
+
+        if isLocked {
+            if let key = NoteLockManager.shared.currentSessionKey() {
+                if NoteLockManager.shared.isEncryptedData(data) {
+                    if let decrypted = try? NoteLockManager.shared.decrypt(envelopeData: data, with: key) {
+                        return decrypted
+                    }
+                } else {
+                    return String(data: data, encoding: .utf8) ?? ""
+                }
             }
             return "<!-- IFOLO_LOCKED_NOTE -->"
         }
@@ -413,11 +421,12 @@ final class Store {
             return
         }
 
-        if !NoteLockManager.shared.isEncryptedData(data) {
+        let folderData = loadFolderData()
+        let isLocked = folderData.lockedNotes?[id] == true || folderData.noteFolders[id] == "vault" || NoteLockManager.shared.isEncryptedData(data)
+        if !isLocked {
             completion(.success(String(data: data, encoding: .utf8) ?? ""))
             return
         }
-
         // 1. 若前端传入了独立密码，直接用密码验证并解密，完全免除 Touch ID 系统弹窗
         if let pwd = password, !pwd.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             switch NoteLockManager.shared.unlockWithPassword(pwd) {
