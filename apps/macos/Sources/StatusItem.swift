@@ -213,6 +213,9 @@ final class StatusItem: NSObject {
 
         menu.addItem(withTitle: "关于 iFolo", action: #selector(showAbout), keyEquivalent: "")
             .target = self
+        menu.addItem(withTitle: "检查更新...", action: #selector(checkForUpdates), keyEquivalent: "")
+            .target = self
+
 
         let quitItem = menu.addItem(withTitle: "退出 iFolo", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quitItem.keyEquivalentModifierMask = [.command]
@@ -260,5 +263,8 @@ final class StatusItem: NSObject {
 
     @objc private func showAbout() {
         AboutWindowController.shared.show()
+    }
+    @objc private func checkForUpdates() {
+        UpdateManager.shared.checkForUpdates()
     }
 }

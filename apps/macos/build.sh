@@ -48,9 +48,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 #                   plain AppKit today but keep it in case SwiftUI arrives later
 "$SWIFTC" -O -swift-version 5 -parse-as-library -disable-sandbox \
   -target "$ARCH-apple-$TARGET_OS" \
+  -F "$ROOT/Frameworks" -framework Sparkle \
+  -Xlinker -rpath -Xlinker @executable_path/../Frameworks \
   -framework AppKit -framework WebKit -framework Carbon -framework NaturalLanguage -framework LocalAuthentication -framework CryptoKit -framework Security \
   "$ROOT"/Sources/*.swift -o "$APP/Contents/MacOS/iFolo"
-
 echo "[2/5] writing Info.plist"
 cp "$ROOT/Resources/Info.plist" "$APP/Contents/Info.plist"
 if [ -f "$ROOT/Resources/AppIcon.icns" ]; then
@@ -68,9 +69,17 @@ mkdir -p "$APP/Contents/Resources/editor"
 # 注意 /. —— 否则 cp 会把 dist 目录本身塞进去，得到 editor/dist/index.html
 cp -R "$EDITOR_DIST/." "$APP/Contents/Resources/editor/"
 
-echo "[4/5] signing (ad-hoc)"
-codesign --force --sign - "$APP" 2>&1 | head -3 || true
+echo "[3.5/5] embedding frameworks"
+mkdir -p "$APP/Contents/Frameworks"
+cp -R "$ROOT/Frameworks/Sparkle.framework" "$APP/Contents/Frameworks/"
 
+echo "[4/5] signing (ad-hoc)"
+codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.Downloader.xpc" 2>/dev/null || true
+codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerConnection.xpc" 2>/dev/null || true
+codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/org.sparkle-project.InstallerStatus.xpc" 2>/dev/null || true
+codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate.app" 2>/dev/null || true
+codesign --force --sign - "$APP/Contents/Frameworks/Sparkle.framework" 2>/dev/null || true
+codesign --force --deep --sign - "$APP" 2>&1 | head -3 || true
 echo "[5/5] done"
 SIZE=$(du -sh "$APP" | cut -f1)
 echo "$APP ($SIZE)"

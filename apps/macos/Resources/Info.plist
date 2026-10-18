@@ -32,5 +32,16 @@
 	<string>NSApplication</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>MIT</string>
+	<!-- Sparkle 2 自动更新配置 -->
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/XideaDev/iFolo-Note/main/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>MDsrXBhOBdljcIiGQpFXvslxi7kd6L1igfzr3+SwFdM=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
 </dict>
 </plist>

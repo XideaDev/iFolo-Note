@@ -75,6 +75,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 预热本地向量检索引擎
         SearchEngine.shared.warmup(notes: Store.shared.listNotes())
 
+        // 启动 Sparkle 2 自动更新引擎
+        UpdateManager.shared.start()
+
         // 首次启动时把面板亮一下，让用户知道它在哪
         if !UserDefaults.standard.bool(forKey: "ifolo.hasLaunchedBefore") {
             UserDefaults.standard.set(true, forKey: "ifolo.hasLaunchedBefore")

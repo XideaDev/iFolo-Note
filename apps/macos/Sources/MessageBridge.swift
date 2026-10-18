@@ -62,6 +62,14 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 "statusBarIcon": UserDefaults.standard.string(forKey: "ifolo.statusBarIcon") ?? "notebook",
                 "edgeHoverDelay": UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15,
                 "isVaultUnlocked": NoteLockManager.shared.hasActiveSession,
+                "updateConfig": [
+                    "automaticallyChecksForUpdates": UpdateManager.shared.automaticallyChecksForUpdates,
+                    "automaticallyDownloadsUpdates": UpdateManager.shared.automaticallyDownloadsUpdates,
+                    "currentVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.1",
+                    "lastChecked": UpdateManager.shared.lastUpdateCheckDate.map { ISO8601DateFormatter().string(from: $0) } ?? "",
+                    "feedURL": UpdateManager.shared.feedURLString ?? "",
+                    "status": UpdateManager.shared.currentState.rawValue
+                ],
             ])
             // 恢复透明度配置（面板透明度与卡片透明度独立无级调控）
             let savedOpacity = UserDefaults.standard.object(forKey: "ifolo.panelOpacity") as? Double ?? 0.82
@@ -393,6 +401,32 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 }
             }
             reply(id, ok: true, payload: NSNull())
+
+        case "checkForUpdates":
+            UpdateManager.shared.checkForUpdates()
+            reply(id, ok: true, payload: ["status": UpdateManager.shared.currentState.rawValue])
+
+        case "getUpdateConfig":
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            let lastCheckedStr = UpdateManager.shared.lastUpdateCheckDate.map { formatter.string(from: $0) } ?? "尚未检查"
+            reply(id, ok: true, payload: [
+                "automaticallyChecksForUpdates": UpdateManager.shared.automaticallyChecksForUpdates,
+                "automaticallyDownloadsUpdates": UpdateManager.shared.automaticallyDownloadsUpdates,
+                "currentVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.1",
+                "lastChecked": lastCheckedStr,
+                "feedURL": UpdateManager.shared.feedURLString ?? "",
+                "status": UpdateManager.shared.currentState.rawValue
+            ])
+
+        case "setUpdateConfig":
+            if let autoCheck = params["automaticallyChecksForUpdates"] as? Bool {
+                UpdateManager.shared.automaticallyChecksForUpdates = autoCheck
+            }
+            if let autoDownload = params["automaticallyDownloadsUpdates"] as? Bool {
+                UpdateManager.shared.automaticallyDownloadsUpdates = autoDownload
+            }
+            reply(id, ok: true, payload: ["success": true])
         default:
             Log.write("未知方法：\(method)")
             reply(id, ok: false, payload: "未知方法 \(method)")

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>iFolo Note 自动更新频道</title>
+        <link>https://www.ifolo.cn</link>
+        <description>iFolo Note macOS 最新版本与安全修复发布频道</description>
+        <language>zh-CN</language>
+        <item>
+            <title>iFolo Note v0.1.1</title>
+            <pubDate>Sun, 18 Oct 2026 07:55:37 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>iFolo Note v0.1.1 稳定版首发：轻盈屏幕边缘悬浮笔记、硬件级 AES-256 私密加密、原生 AI MCP 协议直连及 Sparkle 2 自动更新。</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.1.1/iFolo-0.1.1-arm64.dmg" length="1928123" type="application/octet-stream" sparkle:edSignature="rnZdEnVS6tIthPkXhGnV+auGb+Ktdpyo9tXUsPUg+sC/hCtSyZGGzBc4r5rFr1LM8rfSZnTEnX2mvWZkbsDGBA==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.1.1/iFolo-0.1.1-x86_64.dmg" length="1948912" type="application/octet-stream" sparkle:edSignature="E6PKxMUglfY8l0Cm+evPbeFqz0G5z/RcDSQlLp9FSGdSSndWCNCGWG8Vhe+2zv5cxubL8lmaI2nwcPraouf7CA==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+    </channel>
+</rss>

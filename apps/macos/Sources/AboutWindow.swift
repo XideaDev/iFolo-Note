@@ -77,24 +77,33 @@ final class AboutWindowController: NSWindowController {
         webBtn.title = "www.ifolo.cn ↗"
         webBtn.bezelStyle = .inline
         webBtn.isBordered = false
-        webBtn.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .semibold)
-        webBtn.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .semibold)
         webBtn.contentTintColor = NSColor.systemBlue
         visualEffect.addSubview(webBtn)
 
-        // 6. 确定关闭按钮
-        let doneBtn = NSButton(frame: NSRect(x: (width - 72) / 2, y: 14, width: 72, height: 22))
+        // 6. 操作按钮栏 (检查更新 + 关闭)
+        let btnY: CGFloat = 14
+        let updateBtn = NSButton(frame: NSRect(x: 52, y: btnY, width: 88, height: 24))
+        updateBtn.title = "检查更新..."
+        updateBtn.bezelStyle = .rounded
+        updateBtn.font = NSFont.systemFont(ofSize: 11)
+        visualEffect.addSubview(updateBtn)
+
+        let doneBtn = NSButton(frame: NSRect(x: 148, y: btnY, width: 88, height: 24))
         doneBtn.title = "好"
         doneBtn.bezelStyle = .rounded
         doneBtn.keyEquivalent = "\r"
+        doneBtn.font = NSFont.systemFont(ofSize: 11, weight: .medium)
         visualEffect.addSubview(doneBtn)
 
         super.init(window: panel)
 
         webBtn.target = self
         webBtn.action = #selector(openWebsite)
+        updateBtn.target = self
+        updateBtn.action = #selector(checkForUpdates)
         doneBtn.target = self
         doneBtn.action = #selector(closeAbout)
+
     }
 
     required init?(coder: NSCoder) {
@@ -116,5 +125,9 @@ final class AboutWindowController: NSWindowController {
 
     @objc private func closeAbout() {
         window?.close()
+    }
+
+    @objc private func checkForUpdates() {
+        UpdateManager.shared.checkForUpdates()
     }
 }
