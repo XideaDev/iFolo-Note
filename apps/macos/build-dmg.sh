@@ -114,7 +114,11 @@ APPLESCRIPT
   # 计算校验码与大小
   SIZE=$(du -sh "$DMG_OUT" | cut -f1)
   SHA=$(shasum -a 256 "$DMG_OUT" | cut -d' ' -f1)
+  # 同步创建无版本号固定名称副本，供 GitHub Releases /latest/download 使用
+  FIXED_DMG="$DIST/iFolo-$TARGET_ARCH.dmg"
+  cp -f "$DMG_OUT" "$FIXED_DMG"
   echo "✓ 完成: $DMG_OUT ($SIZE)"
+  echo "  固定别名: $FIXED_DMG"
   echo "  SHA256: $SHA"
 }
 
