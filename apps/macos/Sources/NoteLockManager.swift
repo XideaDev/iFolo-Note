@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 import CryptoKit
 import LocalAuthentication
 import Security
@@ -89,16 +90,17 @@ public final class NoteLockManager {
             return
         }
         sessionLock.unlock()
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+        }
 
         let context = LAContext()
         context.localizedCancelTitle = "取消"
 
         var authError: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &authError) else {
-            // 环境不支持或未设置锁屏密码时，降级或提示
             let msg = authError?.localizedDescription ?? "设备未开启密码或 Touch ID 保护"
             Log.write("LocalAuthentication canEvaluatePolicy 失败: \(msg)")
-            // 尝试直接从钥匙串提取已存密钥（如无交互可用）
             if let directKey = try? retrieveOrCreateMasterKey(allowPrompt: false) {
                 self.saveSession(key: directKey)
                 completion(.success(directKey))
@@ -110,6 +112,7 @@ public final class NoteLockManager {
 
         context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { [weak self] success, error in
             guard let self = self else { return }
+            Log.write("NoteLockManager Touch ID 认证回调: success=\(success), error=\(String(describing: error))")
             if success {
                 do {
                     let key = try self.retrieveOrCreateMasterKey(allowPrompt: true)

@@ -62,6 +62,7 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 "statusBarIcon": UserDefaults.standard.string(forKey: "ifolo.statusBarIcon") ?? "notebook",
                 "edgeHoverDelay": UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15,
                 "isVaultUnlocked": NoteLockManager.shared.hasActiveSession,
+                "hasVaultPassword": !(UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                 "updateConfig": [
                     "automaticallyChecksForUpdates": UpdateManager.shared.automaticallyChecksForUpdates,
                     "automaticallyDownloadsUpdates": UpdateManager.shared.automaticallyDownloadsUpdates,
