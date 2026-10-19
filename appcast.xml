@@ -6,6 +6,26 @@
         <description>iFolo Note macOS 最新版本与安全修复发布频道</description>
         <language>zh-CN</language>
         <item>
+            <title>iFolo Note v0.3.1</title>
+            <pubDate>Mon, 19 Oct 2026 03:57:43 +0000</pubDate>
+            <sparkle:version>4</sparkle:version>
+            <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>### iFolo Note v0.3.1 (格式对齐修复与选区气泡增强)
+- **任务列表与核对清单严格对齐**：根治列表项子选择器泄漏导致的 8.5pt 垂直错位，勾选框、首行文字与状态胶囊严格对齐在 Y=11.0px 中心轴；
+- **待办输入规则双前缀修复**：键入 - [ ] 自动生成任务项时精确裁剪前导标记文本，消除落盘双标记污染；
+- **Markdown 泛型与组件标签保护**：消除对非白名单标签（如 List&lt;User&gt;、&lt;Component /&gt;）的静默删除，安全保留纯文本；
+- **自动保存基准回滚机制**：修复保存失败时基准过早更新导致的后续修改漏存假阳性缺陷；
+- **中文拼音输入法冲突修复**：斜杠菜单键盘监听集成 isComposing 守卫，中文输入选词敲击回车不再误执行斜杠命令；
+- **选区浮动格式气泡菜单 (BubbleMenu)**：正文选中文本自适应浮现加粗、斜体、下划线、删除线、行内代码、外链、调色板与高亮；
+- **外部表格智能转 Markdown**：复制 Excel、Google Sheets、Notion、网页表格时，自动识别并转换为标准 Markdown 对齐管道表格；
+- **代码块右上角一键复制与语言徽标**：支持 ```lang 快速声明语言，右上角呈现等宽语言标识及平滑反馈的复制按钮；
+- **代码块与列表键盘交互**：代码块内 Tab 插入 2 空格、空行回车跳出；待办项回车分裂新项、Tab/Shift-Tab 升降级；
+- **排版渲染与对比度调优**：正文颜色提升回 text-primary，补齐 h4~h6 排版尺寸，行内代码基线微调消除中英文混排下沉。</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.3.1/iFolo-0.3.1-arm64.dmg" length="2007804" type="application/octet-stream" sparkle:edSignature="xJTF0tOhR2enbnr4rGZchN9S+0myB7fvNKwwvZp+AQZ5CTwJbgkvN9OPdHJ18+vMB712etmeu37gcdFdIQ7/Cg==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v0.3.1/iFolo-0.3.1-x86_64.dmg" length="2029018" type="application/octet-stream" sparkle:edSignature="8ESWkNu9COpQ1dIf4YSF4UGlKBmGQ4fWBPg8FdRwOwucHw8bOoQIcol65rziKOTbURLw6FR5D3HJZIWks3bMBQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+        <item>
             <title>iFolo Note v0.3.0</title>
             <pubDate>Sun, 18 Oct 2026 12:46:01 +0000</pubDate>
             <sparkle:version>3</sparkle:version>

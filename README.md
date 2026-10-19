@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/XideaDev/iFolo/releases/tag/v0.3.0"><img src="https://img.shields.io/badge/Release-v0.3.0-0EA5E9.svg" alt="Release v0.3.0" /></a>
+  <a href="https://github.com/XideaDev/iFolo/releases/tag/v0.3.1"><img src="https://img.shields.io/badge/Release-v0.3.1-0EA5E9.svg" alt="Release v0.3.1" /></a>
   <a href="https://github.com/XideaDev/iFolo/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License MIT" /></a>
   <img src="https://img.shields.io/badge/macOS-14.0%2B%20(Apple%20Silicon%20%26%20Intel)-64748B.svg" alt="macOS 14.0+" />
   <img src="https://img.shields.io/badge/Swift-5.10-F05138.svg" alt="Swift 5" />
@@ -163,8 +163,8 @@ iFolo 采用 **「原生系统宿主 + 现代化 Web 编辑内核」** 的混合
 
 进入 [GitHub Releases](https://github.com/XideaDev/iFolo/releases) 页面下载适合您设备架构的安装包：
 
-- **Apple Silicon (M1/M2/M3/M4 系列)**：下载 `iFolo-0.3.0-arm64.dmg`
-- **Intel 架构 Mac**：下载 `iFolo-0.3.0-x86_64.dmg`
+- **Apple Silicon (M1/M2/M3/M4 系列)**：下载 `iFolo-0.3.1-arm64.dmg`
+- **Intel 架构 Mac**：下载 `iFolo-0.3.1-x86_64.dmg`
 
 双击挂载 DMG 镜像，将 `iFolo.app` 拖入 `Applications` 文件夹即可完成安装。
 
@@ -204,8 +204,8 @@ tail -f ~/Library/Logs/iFolo.log
 ./apps/macos/build-dmg.sh
 
 # 编译完成后的产物将自动输出至 dist/ 目录：
-#   dist/iFolo-0.3.0-arm64.dmg
-#   dist/iFolo-0.3.0-x86_64.dmg
+#   dist/iFolo-0.3.1-arm64.dmg
+#   dist/iFolo-0.3.1-x86_64.dmg
 ```
 
 ---

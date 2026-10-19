@@ -190,7 +190,7 @@ final class MCPServer {
                     tools: ["listChanged": false],
                     prompts: ["listChanged": false]
                 ),
-                serverInfo: MCPServerInfo(name: "ifolo-mcp", version: "0.3.0")
+                serverInfo: MCPServerInfo(name: "ifolo-mcp", version: "0.3.1")
             )
             responseData = encodeResponse(id: id, result: result)
 
