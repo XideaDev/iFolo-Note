@@ -659,17 +659,17 @@ final class Store {
         let systemFolders: [FolderMeta] = [
             FolderMeta(id: "all", name: "全部", isSystem: true),
             FolderMeta(id: "vault", name: "保险箱", isSystem: true),
-            FolderMeta(id: "todo", name: "代办笔记", isSystem: true),
+            FolderMeta(id: "todo", name: "Todos", isSystem: true),
         ]
         if let data = try? Data(contentsOf: foldersFile),
            var decoded = try? JSONDecoder().decode(FolderStoreData.self, from: data) {
             decoded.folders.removeAll(where: { $0.id == "note" })
             for i in 0..<decoded.folders.count {
                 if decoded.folders[i].id == "todo" {
-                    decoded.folders[i].name = "代办笔记"
+                    decoded.folders[i].name = "Todos"
                 }
             }
-            // 强制保证前三位系统分类固定排序：全部 -> 保险箱 -> 代办笔记
+            // 强制保证前三位系统分类固定排序：全部 -> 保险箱 -> Todos
             let custom = decoded.folders.filter { $0.id != "vault" && $0.id != "all" && $0.id != "todo" }
             decoded.folders = systemFolders + custom
             saveFolderData(decoded)
