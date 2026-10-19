@@ -6,11 +6,12 @@
 
 # 构建产物
 build/
-dist/
+/dist/
+!plugins/**/dist/
+!plugins/**/dist/*.piplug
 *.app
 *.dmg
 apps/macos/build/
-
 # 运行时数据 (私有笔记绝不入库)
 local-data/
 *.ifolo-backup

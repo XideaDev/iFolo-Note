@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="pi-plugin-chrome" content="v2" />
+  <title>iFolo Todo</title>
+  <style>
+/* ============================================================================
+   iFolo Todo 视觉系统 —— 深度兼容 pi-desktop 日夜双模与 iFolo 设计语言
+   ========================================================================= */
+
+:root {
+  /* ---------- 品牌标志三原色 ---------- */
+  --ifolo-blue:   #5CA3FF;
+  --ifolo-green:  #69CF3D;
+  --ifolo-orange: #FFA51F;
+
+  /* 默认深色优先（完美契合当前 PI-Desktop 的深色环境） */
+  --bg-app:          var(--panel-background, var(--background, #15181D));
+  --bg-card:         var(--card-background, #1D2127);
+  --bg-card-hover:   rgba(255, 255, 255, 0.06);
+  --bg-sunken:       rgba(0, 0, 0, 0.25);
+  --text-main:       var(--foreground, #E9EDF3);
+  --text-muted:      var(--muted-foreground, #7E8899);
+  --text-secondary:  #CBD5E1;
+  --border-subtle:   var(--border, #2A2F37);
+  --border-focus:    #5CA3FF;
+  --accent:          #5CA3FF;
+  --accent-soft:     rgba(92, 163, 255, 0.16);
+  --success:         #A4E08A;
+  --success-soft:    rgba(105, 207, 61, 0.16);
+  --warning:         #FFCE85;
+  --warning-soft:    rgba(255, 165, 31, 0.16);
+  --danger:          #F89194;
+  --danger-soft:     rgba(228, 58, 63, 0.16);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 显式亮色模式切换（系统亮色或手动切换） */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg-app:          #F5F7FA;
+    --bg-card:         #FFFFFF;
+    --bg-card-hover:   #F0F4F8;
+    --bg-sunken:       #EBF0F5;
+    --text-main:       #22262E;
+    --text-muted:      #707B89;
+    --text-secondary:  #40464F;
+    --border-subtle:   #E2E8F0;
+    --border-focus:    #0965DC;
+    --accent:          #0965DC;
+    --accent-soft:     #EBF4FF;
+    --success:         #41961D;
+    --success-soft:    #E3F5DB;
+    --warning:         #FFA51F;
+    --warning-soft:    #FFEFD6;
+    --danger:          #D52026;
+    --danger-soft:     #FFEBEB;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.08);
+  }
+}
+
+[data-theme="light"] {
+  --bg-app:          #F5F7FA;
+  --bg-card:         #FFFFFF;
+  --bg-card-hover:   #F0F4F8;
+  --bg-sunken:       #EBF0F5;
+  --text-main:       #22262E;
+  --text-muted:      #707B89;
+  --text-secondary:  #40464F;
+  --border-subtle:   #E2E8F0;
+  --border-focus:    #0965DC;
+  --accent:          #0965DC;
+  --accent-soft:     #EBF4FF;
+  --success:         #41961D;
+  --success-soft:    #E3F5DB;
+  --warning:         #FFA51F;
+  --warning-soft:    #FFEFD6;
+  --danger:          #D52026;
+  --danger-soft:     #FFEBEB;
+}
+
+[data-theme="dark"] {
+  --bg-app:          #15181D;
+  --bg-card:         #1D2127;
+  --bg-card-hover:   #242931;
+  --bg-sunken:       #181C22;
+  --text-main:       #E9EDF3;
+  --text-muted:      #7E8899;
+  --text-secondary:  #CBD5E1;
+  --border-subtle:   #2A2F37;
+  --border-focus:    #5CA3FF;
+  --accent:          #5CA3FF;
+  --accent-soft:     rgba(92, 163, 255, 0.16);
+  --success:         #A4E08A;
+  --success-soft:    rgba(105, 207, 61, 0.16);
+  --warning:         #FFCE85;
+  --warning-soft:    rgba(255, 165, 31, 0.16);
+  --danger:          #F89194;
+  --danger-soft:     rgba(228, 58, 63, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  font-size: 13px;
+  line-height: 1.5;
+  user-select: none;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.ifolo-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+/* 顶部品牌栏 */
+.ifolo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.2px;
+}
+
+/* iFolo 经典三原色几何 Dot */
+.logo-tri-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.logo-tri-dot .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot--blue   { background-color: var(--ifolo-blue); }
+.dot--green  { background-color: var(--ifolo-green); }
+.dot--orange { background-color: var(--ifolo-orange); }
+
+.brand-text {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.1px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  border-radius: var(--radius-sm);
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.icon-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 主分段切换器 (Segment Control) */
+.segment-control {
+  display: flex;
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.segment-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 5px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.segment-btn.active {
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
+  font-weight: 600;
+}
+
+.badge-count {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+}
+
+.segment-btn.active .badge-count {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 会话任务进度概览卡 */
+.session-progress-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+
+.session-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-ratio {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-sunken);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--ifolo-green);
+  border-radius: 2px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 搜索框 */
+.search-box input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-main);
+  outline: none;
+  font-size: 12px;
+  transition: border-color 0.15s ease;
+}
+
+.search-box input:focus {
+  border-color: var(--border-focus);
+}
+
+/* 快速创建/追加卡片 */
+.quick-create-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-create-card.hidden {
+  display: none;
+}
+
+.card-mode-tabs {
+  display: flex;
+  background: var(--bg-sunken);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.mode-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 4px;
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-tab.active {
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-input, .card-textarea, .card-select {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-app);
+  color: var(--text-main);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.card-input:focus, .card-textarea:focus, .card-select:focus {
+  border-color: var(--border-focus);
+}
+
+.card-textarea {
+  height: 64px;
+  resize: vertical;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pin-toggle {
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+.btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--bg-sunken);
+  color: var(--text-main);
+}
+
+/* 主内容滚动容器 */
+.content-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.view-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.view-panel.hidden {
+  display: none;
+}
+
+/* 当前会话任务项列表 (Session Tasks) */
+.task-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.session-task-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.session-task-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(92, 163, 255, 0.3);
+}
+
+/* 状态复选框 */
+.task-checkbox-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 10px;
+  transition: all 0.15s ease;
+}
+
+.session-task-card.is-done .task-checkbox-indicator {
+  background: var(--ifolo-green);
+  border-color: var(--ifolo-green);
+  color: #fff;
+}
+
+.session-task-card.is-progress .task-checkbox-indicator {
+  border-color: var(--ifolo-orange);
+  background: var(--warning-soft);
+  color: var(--ifolo-orange);
+}
+
+.task-content-box {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-text {
+  font-size: 12px;
+  color: var(--text-main);
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.session-task-card.is-done .task-text {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.task-footer-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.task-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.task-badge--done {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.task-badge--progress {
+  background: var(--warning-soft);
+  color: var(--ifolo-orange);
+}
+
+.task-badge--pending {
+  background: var(--bg-sunken);
+  color: var(--text-muted);
+}
+
+.task-badge--high {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* 代办笔记分类列表 (iFolo Notes) */
+.notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.note-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+}
+
+.note-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.note-card__title {
+  font-weight: 600;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-card__badge {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.note-card__badge--todo {
+  background: var(--warning-soft);
+  color: var(--ifolo-orange);
+}
+
+.note-card__snippet {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.empty-hint {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 30px 10px;
+  font-size: 12px;
+}
+
+.empty-hint.hidden {
+  display: none;
+}
+
+/* 底部状态条 */
+.status-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.status-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--ifolo-green);
+}
+
+/* 详情 Modal */
+.detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-modal.hidden {
+  display: none;
+}
+
+.detail-modal__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.detail-modal__sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 85%;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-subtle);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-shadow: var(--shadow-md);
+  box-sizing: border-box;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.detail-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.detail-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.lock-card {
+  padding: 24px 16px;
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  border: 1px solid rgba(228, 58, 63, 0.2);
+  text-align: center;
+  color: var(--text-main);
+  margin-top: 16px;
+}
+
+.lock-card__icon {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+.lock-card__title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lock-card__desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+</style>
+</head>
+<body>
+  <div class="ifolo-container">
+    <!-- 头部栏 -->
+    <header class="ifolo-header">
+      <div class="brand">
+        <span class="logo-tri-dot">
+          <span class="dot dot--blue"></span>
+          <span class="dot dot--green"></span>
+          <span class="dot dot--orange"></span>
+        </span>
+        <span class="brand-text">iFolo Todo</span>
+      </div>
+      <div class="actions">
+        <button id="btn-quick-new" class="icon-btn" title="新建/追加待办">+</button>
+        <button id="btn-refresh" class="icon-btn" title="单击刷新数据 / 双击重载界面">&#x21bb;</button>
+      </div>
+    </header>
+
+    <!-- 主视图分段切换 (当前会话任务 vs 代办笔记库) -->
+    <div class="segment-control">
+      <button id="tab-session-todos" class="segment-btn active">
+        <span>当前任务</span>
+        <span id="session-todo-badge" class="badge-count">0</span>
+      </button>
+      <button id="tab-ifolo-notes" class="segment-btn">
+        <span>代办笔记库</span>
+        <span id="notes-todo-badge" class="badge-count">0</span>
+      </button>
+    </div>
+
+    <!-- 状态与进度条指示 -->
+    <div id="session-progress-card" class="session-progress-card">
+      <div class="session-progress-header">
+        <span id="current-session-title" class="session-title">正在检测当前会话...</span>
+        <span id="session-progress-text" class="session-ratio">0/0</span>
+      </div>
+      <div class="progress-track">
+        <div id="session-progress-fill" class="progress-fill" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- 搜索栏 (仅在代办笔记库视图显示) -->
+    <div id="search-box-wrap" class="search-box hidden">
+      <input type="text" id="search-input" placeholder="语义搜索 iFolo 代办与备忘..." autocomplete="off">
+    </div>
+
+    <!-- 快速创建/追加卡片 (可折叠) -->
+    <div id="quick-create-card" class="quick-create-card hidden">
+      <div class="card-mode-tabs">
+        <button id="tab-mode-create" class="mode-tab active">新建代办</button>
+        <button id="tab-mode-append" class="mode-tab">追加到已有笔记</button>
+      </div>
+
+      <!-- 新建模式 -->
+      <div id="create-mode-fields">
+        <input type="text" id="new-note-title" placeholder="代办标题 (选填)" class="card-input">
+      </div>
+
+      <!-- 追加模式 -->
+      <div id="append-mode-fields" class="hidden">
+        <select id="append-target-select" class="card-select">
+          <option value="">-- 请选择目标代办笔记 --</option>
+        </select>
+      </div>
+
+      <textarea id="new-note-content" placeholder="输入任务项，例如：&#10;- [ ] 完善测试用例&#10;- [ ] 检查跨进程广播" class="card-textarea"></textarea>
+
+      <div class="card-footer">
+        <label id="pin-toggle-wrap" class="pin-toggle">
+          <input type="checkbox" id="new-note-pin"> 设为置顶代办
+        </label>
+        <div class="btn-group">
+          <button id="btn-cancel-create" class="btn btn-secondary">取消</button>
+          <button id="btn-submit-create" class="btn btn-primary">汇总入库</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主展示区 -->
+    <main class="content-body">
+      <!-- 视图 A：当前会话任务流看板 -->
+      <div id="view-session-todos" class="view-panel">
+        <div id="session-tasks-list" class="task-items-list">
+          <!-- 动态渲染任务项 -->
+        </div>
+        <div id="session-empty-hint" class="empty-hint hidden">当前会话暂无排队或执行中的任务清单</div>
+      </div>
+
+      <!-- 视图 B：iFolo 主程序代办笔记分类列表 -->
+      <div id="view-ifolo-notes" class="view-panel hidden">
+        <div id="notes-container" class="notes-container">
+          <!-- 动态渲染 iFolo 代办分类中的笔记 -->
+        </div>
+        <div id="notes-empty-hint" class="empty-hint hidden">暂无代办笔记</div>
+      </div>
+    </main>
+
+    <!-- 底部状态指示 -->
+    <footer class="status-footer">
+      <span class="status-indicator"></span>
+      <span id="status-text">已连接到 iFolo 本地服务 · 实时双向同步</span>
+    </footer>
+
+    <!-- 笔记详情查看模态弹窗 -->
+    <div id="detail-modal" class="detail-modal hidden">
+      <div class="detail-modal__backdrop" id="detail-backdrop"></div>
+      <div class="detail-modal__sheet">
+        <div class="detail-header">
+          <div class="detail-title-wrap">
+            <h3 id="detail-title" class="detail-title">笔记正文</h3>
+            <span id="detail-meta" class="detail-meta">更新时间</span>
+          </div>
+          <button id="btn-close-detail" class="icon-btn" title="关闭">✕</button>
+        </div>
+        <div id="detail-body" class="detail-body">
+          <!-- 动态注入正文或锁定提示卡 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+class TodoPanelController {
+    // 顶层主选项卡
+    tabSessionTodos;
+    tabIfoloNotes;
+    sessionTodoBadge;
+    notesTodoBadge;
+    viewSessionTodos;
+    viewIfoloNotes;
+    searchBoxWrap;
+    searchInput;
+    // 会话任务看板元素
+    currentSessionTitle;
+    sessionProgressText;
+    sessionProgressFill;
+    sessionTasksList;
+    sessionEmptyHint;
+    // 代办笔记库元素
+    notesContainer;
+    notesEmptyHint;
+    // 快速沉淀卡片
+    quickCreateCard;
+    tabModeCreate;
+    tabModeAppend;
+    createFields;
+    appendFields;
+    appendTargetSelect;
+    pinToggleWrap;
+    // 详情弹窗
+    detailModal;
+    detailBackdrop;
+    detailTitle;
+    detailMeta;
+    detailBody;
+    btnCloseDetail;
+    // 状态与数据
+    currentTab = "session";
+    currentMode = "create";
+    allNotes = [];
+    activeSession = null;
+    lastRevision = 0;
+    syncTimer = null;
+    constructor() {
+        this.tabSessionTodos = document.getElementById("tab-session-todos");
+        this.tabIfoloNotes = document.getElementById("tab-ifolo-notes");
+        this.sessionTodoBadge = document.getElementById("session-todo-badge");
+        this.notesTodoBadge = document.getElementById("notes-todo-badge");
+        this.viewSessionTodos = document.getElementById("view-session-todos");
+        this.viewIfoloNotes = document.getElementById("view-ifolo-notes");
+        this.searchBoxWrap = document.getElementById("search-box-wrap");
+        this.searchInput = document.getElementById("search-input");
+        this.currentSessionTitle = document.getElementById("current-session-title");
+        this.sessionProgressText = document.getElementById("session-progress-text");
+        this.sessionProgressFill = document.getElementById("session-progress-fill");
+        this.sessionTasksList = document.getElementById("session-tasks-list");
+        this.sessionEmptyHint = document.getElementById("session-empty-hint");
+        this.notesContainer = document.getElementById("notes-container");
+        this.notesEmptyHint = document.getElementById("notes-empty-hint");
+        this.quickCreateCard = document.getElementById("quick-create-card");
+        this.tabModeCreate = document.getElementById("tab-mode-create");
+        this.tabModeAppend = document.getElementById("tab-mode-append");
+        this.createFields = document.getElementById("create-mode-fields");
+        this.appendFields = document.getElementById("append-mode-fields");
+        this.appendTargetSelect = document.getElementById("append-target-select");
+        this.pinToggleWrap = document.getElementById("pin-toggle-wrap");
+        this.detailModal = document.getElementById("detail-modal");
+        this.detailBackdrop = document.getElementById("detail-backdrop");
+        this.detailTitle = document.getElementById("detail-title");
+        this.detailMeta = document.getElementById("detail-meta");
+        this.detailBody = document.getElementById("detail-body");
+        this.btnCloseDetail = document.getElementById("btn-close-detail");
+        this.bindEvents();
+        this.init();
+    }
+    bindEvents() {
+        // 顶部主选项卡切换
+        this.tabSessionTodos.addEventListener("click", () => this.switchMainTab("session"));
+        this.tabIfoloNotes.addEventListener("click", () => this.switchMainTab("notes"));
+        // 立即刷新
+        const btnRefresh = document.getElementById("btn-refresh");
+        btnRefresh?.addEventListener("click", async () => {
+            await this.invokeRpc("ifolo.syncSessionNow");
+            await this.refreshAll();
+        });
+        btnRefresh?.addEventListener("dblclick", () => {
+            window.location.reload();
+        });
+        // 展开/收起快速新建
+        document.getElementById("btn-quick-new")?.addEventListener("click", () => {
+            this.quickCreateCard.classList.toggle("hidden");
+            if (!this.quickCreateCard.classList.contains("hidden")) {
+                this.updateAppendSelectOptions();
+                document.getElementById("new-note-content")?.focus();
+            }
+        });
+        document.getElementById("btn-cancel-create")?.addEventListener("click", () => {
+            this.quickCreateCard.classList.add("hidden");
+        });
+        // 新建 / 追加模式切换
+        this.tabModeCreate.addEventListener("click", () => this.switchCaptureMode("create"));
+        this.tabModeAppend.addEventListener("click", () => this.switchCaptureMode("append"));
+        // 提交代办保存
+        document.getElementById("btn-submit-create")?.addEventListener("click", () => {
+            this.handleCreateSubmit();
+        });
+        // 搜索输入去抖 (仅代办笔记库)
+        let searchTimer;
+        this.searchInput.addEventListener("input", () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                this.handleSearch();
+            }, 300);
+        });
+        // 详情模态浮层
+        this.btnCloseDetail.addEventListener("click", () => this.closeDetailModal());
+        this.detailBackdrop.addEventListener("click", () => this.closeDetailModal());
+        // 焦点恢复探测
+        window.addEventListener("focus", () => {
+            this.refreshAll();
+        });
+    }
+    async init() {
+        this.applyThemeAdaptation();
+        await this.refreshAll();
+        this.startAutoSyncLoop();
+    }
+    applyThemeAdaptation() {
+        const mql = window.matchMedia("(prefers-color-scheme: dark)");
+        const updateTheme = () => {
+            const isDark = mql.matches ||
+                document.body.classList.contains("dark") ||
+                document.documentElement.classList.contains("dark");
+            if (isDark) {
+                document.documentElement.setAttribute("data-theme", "dark");
+            }
+            else {
+                document.documentElement.removeAttribute("data-theme");
+            }
+        };
+        updateTheme();
+        mql.addEventListener("change", updateTheme);
+    }
+    async waitForPiApi(timeoutMs = 1500) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            if (typeof window.pi?.invoke === "function") {
+                return window.pi;
+            }
+            await new Promise((r) => setTimeout(r, 40));
+        }
+        return window.pi || null;
+    }
+    async invokeRpc(channel, payload) {
+        const api = await this.waitForPiApi();
+        if (api && typeof api.invoke === "function") {
+            return await api.invoke(channel, payload);
+        }
+        console.warn(`[TodoPanel] pi.invoke unavailable for ${channel}`);
+        return { ok: false, error: "API_UNAVAILABLE" };
+    }
+    async refreshAll() {
+        await Promise.all([
+            this.loadSessionTodos(),
+            this.loadIfoloNotes()
+        ]);
+    }
+    startAutoSyncLoop() {
+        if (this.syncTimer)
+            clearInterval(this.syncTimer);
+        this.syncTimer = setInterval(async () => {
+            if (document.hidden)
+                return;
+            const pollRes = await this.invokeRpc("ifolo.pollChanges", { since: this.lastRevision });
+            if (pollRes?.ok) {
+                this.lastRevision = pollRes.revision;
+                if (pollRes.hasChanges) {
+                    await this.loadIfoloNotes();
+                }
+            }
+            await this.loadSessionTodos();
+        }, 1200);
+    }
+    async loadSessionTodos() {
+        try {
+            const res = await this.invokeRpc("ifolo.getSessionTodos");
+            if (res?.ok && res.session) {
+                this.activeSession = res.session;
+                this.renderSessionTodos(res.session);
+            }
+            else {
+                this.currentSessionTitle.innerText = "暂无活跃任务会话";
+                this.sessionProgressText.innerText = "0/0";
+                this.sessionProgressFill.style.width = "0%";
+                this.sessionTodoBadge.innerText = "0";
+                this.sessionTasksList.innerHTML = "";
+                this.sessionEmptyHint.classList.remove("hidden");
+            }
+        }
+        catch (e) {
+            console.error("[TodoPanel] Failed to load session todos:", e);
+        }
+    }
+    renderSessionTodos(session) {
+        this.currentSessionTitle.innerText = session.sessionTitle || "当前会话";
+        const todos = session.todos || [];
+        const total = todos.length;
+        const completed = todos.filter((t) => t.status === "completed").length;
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        this.sessionProgressText.innerText = `${completed}/${total} (${percent}%)`;
+        this.sessionProgressFill.style.width = `${percent}%`;
+        this.sessionTodoBadge.innerText = String(total);
+        this.sessionTasksList.innerHTML = "";
+        if (todos.length === 0) {
+            this.sessionEmptyHint.classList.remove("hidden");
+            return;
+        }
+        this.sessionEmptyHint.classList.add("hidden");
+        for (const t of todos) {
+            const card = document.createElement("div");
+            const isDone = t.status === "completed";
+            const isProgress = t.status === "in_progress";
+            card.className = `session-task-card ${isDone ? "is-done" : ""} ${isProgress ? "is-progress" : ""}`;
+            const check = document.createElement("div");
+            check.className = "task-checkbox-indicator";
+            check.innerText = isDone ? "✓" : (isProgress ? "●" : "");
+            card.appendChild(check);
+            const body = document.createElement("div");
+            body.className = "task-content-box";
+            const text = document.createElement("div");
+            text.className = "task-text";
+            text.innerText = t.content;
+            body.appendChild(text);
+            const footerTags = document.createElement("div");
+            footerTags.className = "task-footer-tags";
+            const statusBadge = document.createElement("span");
+            if (isDone) {
+                statusBadge.className = "task-badge task-badge--done";
+                statusBadge.innerText = "已完成";
+            }
+            else if (isProgress) {
+                statusBadge.className = "task-badge task-badge--progress";
+                statusBadge.innerText = "正在进行...";
+            }
+            else if (t.status === "cancelled") {
+                statusBadge.className = "task-badge task-badge--pending";
+                statusBadge.innerText = "已取消";
+            }
+            else {
+                statusBadge.className = "task-badge task-badge--pending";
+                statusBadge.innerText = "排队等待";
+            }
+            footerTags.appendChild(statusBadge);
+            if (t.priority === "high") {
+                const priBadge = document.createElement("span");
+                priBadge.className = "task-badge task-badge--high";
+                priBadge.innerText = "🔥高优";
+                footerTags.appendChild(priBadge);
+            }
+            body.appendChild(footerTags);
+            card.appendChild(body);
+            this.sessionTasksList.appendChild(card);
+        }
+    }
+    async loadIfoloNotes() {
+        try {
+            const res = await this.invokeRpc("ifolo.listNotes", { limit: 60 });
+            if (res?.ok && Array.isArray(res.notes)) {
+                this.allNotes = res.notes;
+                const todoNotes = this.allNotes.filter(n => n.folderId === "todo" || !!n.hasTodo);
+                this.notesTodoBadge.innerText = String(todoNotes.length);
+                if (this.currentTab === "notes") {
+                    this.renderIfoloNotes(todoNotes);
+                }
+                this.updateAppendSelectOptions();
+            }
+        }
+        catch (e) {
+            console.error("[TodoPanel] Failed to load ifolo notes:", e);
+        }
+    }
+    renderIfoloNotes(notes) {
+        this.notesContainer.innerHTML = "";
+        if (notes.length === 0) {
+            this.notesEmptyHint.classList.remove("hidden");
+            return;
+        }
+        this.notesEmptyHint.classList.add("hidden");
+        for (const note of notes) {
+            const card = document.createElement("div");
+            card.className = "note-card";
+            card.addEventListener("click", () => {
+                this.openNoteDetail(note);
+            });
+            const header = document.createElement("div");
+            header.className = "note-card__header";
+            const title = document.createElement("div");
+            title.className = "note-card__title";
+            title.innerText = note.title || "未命名代办";
+            header.appendChild(title);
+            if (note.isPinned) {
+                const badge = document.createElement("span");
+                badge.className = "note-card__badge";
+                badge.innerText = "置顶";
+                header.appendChild(badge);
+            }
+            else {
+                const todoBadge = document.createElement("span");
+                todoBadge.className = "note-card__badge note-card__badge--todo";
+                todoBadge.innerText = "代办";
+                header.appendChild(todoBadge);
+            }
+            const snippet = document.createElement("div");
+            snippet.className = "note-card__snippet";
+            snippet.innerText = note.snippet || "暂无待办明细";
+            card.appendChild(header);
+            card.appendChild(snippet);
+            this.notesContainer.appendChild(card);
+        }
+    }
+    switchMainTab(tab) {
+        this.currentTab = tab;
+        if (tab === "session") {
+            this.tabSessionTodos.classList.add("active");
+            this.tabIfoloNotes.classList.remove("active");
+            this.viewSessionTodos.classList.remove("hidden");
+            this.viewIfoloNotes.classList.add("hidden");
+            this.searchBoxWrap.classList.add("hidden");
+            this.loadSessionTodos();
+        }
+        else {
+            this.tabSessionTodos.classList.remove("active");
+            this.tabIfoloNotes.classList.add("active");
+            this.viewSessionTodos.classList.add("hidden");
+            this.viewIfoloNotes.classList.remove("hidden");
+            this.searchBoxWrap.classList.remove("hidden");
+            const todoNotes = this.allNotes.filter(n => n.folderId === "todo" || !!n.hasTodo);
+            this.renderIfoloNotes(todoNotes);
+        }
+    }
+    switchCaptureMode(mode) {
+        this.currentMode = mode;
+        if (mode === "create") {
+            this.tabModeCreate.classList.add("active");
+            this.tabModeAppend.classList.remove("active");
+            this.createFields.classList.remove("hidden");
+            this.appendFields.classList.add("hidden");
+            this.pinToggleWrap.classList.remove("hidden");
+        }
+        else {
+            this.tabModeCreate.classList.remove("active");
+            this.tabModeAppend.classList.add("active");
+            this.createFields.classList.add("hidden");
+            this.appendFields.classList.remove("hidden");
+            this.pinToggleWrap.classList.add("hidden");
+            this.updateAppendSelectOptions();
+        }
+    }
+    updateAppendSelectOptions() {
+        const currentVal = this.appendTargetSelect.value;
+        this.appendTargetSelect.innerHTML = '<option value="">-- 请选择目标代办笔记 --</option>';
+        const candidates = this.allNotes.filter(n => n.folderId === "todo" || !!n.hasTodo);
+        for (const note of (candidates.length > 0 ? candidates : this.allNotes)) {
+            const opt = document.createElement("option");
+            opt.value = note.id;
+            opt.innerText = `${note.isPinned ? "📌 " : ""}${note.title || "无标题笔记"}`;
+            this.appendTargetSelect.appendChild(opt);
+        }
+        if (currentVal) {
+            this.appendTargetSelect.value = currentVal;
+        }
+    }
+    async handleSearch() {
+        const query = this.searchInput.value.trim();
+        if (!query) {
+            const todoNotes = this.allNotes.filter(n => n.folderId === "todo" || !!n.hasTodo);
+            return this.renderIfoloNotes(todoNotes);
+        }
+        try {
+            const res = await this.invokeRpc("ifolo.searchNotes", { query, limit: 20 });
+            if (res?.ok && Array.isArray(res.results)) {
+                const mapped = res.results.map((r) => ({
+                    id: r.id,
+                    title: r.title,
+                    snippet: r.snippet || r.matchedText,
+                    updatedAt: r.updatedAt,
+                    folderId: "todo"
+                }));
+                this.renderIfoloNotes(mapped);
+            }
+        }
+        catch (e) {
+            console.error("[TodoPanel] Search failed:", e);
+        }
+    }
+    async handleCreateSubmit() {
+        const titleInput = document.getElementById("new-note-title");
+        const contentInput = document.getElementById("new-note-content");
+        const pinInput = document.getElementById("new-note-pin");
+        const content = contentInput.value.trim();
+        if (!content)
+            return;
+        try {
+            let payload = { content };
+            if (this.currentMode === "create") {
+                payload.title = titleInput.value.trim() || undefined;
+                payload.isPinned = pinInput.checked;
+                payload.folderId = "todo";
+            }
+            else {
+                const targetId = this.appendTargetSelect.value;
+                if (!targetId) {
+                    alert("请先选择要追加的目标代办笔记");
+                    return;
+                }
+                payload.targetNoteId = targetId;
+            }
+            const res = await this.invokeRpc("ifolo.capture", payload);
+            if (res?.ok) {
+                titleInput.value = "";
+                contentInput.value = "";
+                pinInput.checked = false;
+                this.quickCreateCard.classList.add("hidden");
+                await this.loadIfoloNotes();
+            }
+            else {
+                alert(res?.error || "保存失败");
+            }
+        }
+        catch (e) {
+            console.error("[TodoPanel] Submit failed:", e);
+            alert("提交失败: " + e.message);
+        }
+    }
+    async openNoteDetail(note) {
+        this.detailTitle.innerText = note.title || "代办正文";
+        const dateStr = typeof note.updatedAt === "number"
+            ? new Date(note.updatedAt * 1000).toLocaleString()
+            : String(note.updatedAt || "");
+        this.detailMeta.innerText = dateStr ? `更新于 ${dateStr}` : "";
+        this.detailBody.innerHTML = '<div style="color: var(--text-muted); padding: 10px 0;">正在读取代办正文...</div>';
+        this.detailModal.classList.remove("hidden");
+        try {
+            const res = await this.invokeRpc("ifolo.readNote", { noteId: note.id });
+            if (res?.ok) {
+                if (res.isLocked) {
+                    this.detailBody.innerHTML = `
+            <div class="lock-card">
+              <div class="lock-card__icon">🔒</div>
+              <div class="lock-card__title">受硬件级私密锁保护</div>
+              <div class="lock-card__desc">此代办笔记已通过 AES-256 硬件密文锁定。请直接在 macOS 的 iFolo 悬浮窗口通过 Touch ID 解锁后查看。</div>
+            </div>
+          `;
+                }
+                else {
+                    this.detailBody.innerText = res.content || "(正文内容为空)";
+                }
+            }
+            else {
+                this.detailBody.innerText = "读取失败: " + (res?.error || "未知异常");
+            }
+        }
+        catch (e) {
+            this.detailBody.innerText = "读取失败: " + e.message;
+        }
+    }
+    closeDetailModal() {
+        this.detailModal.classList.add("hidden");
+    }
+}
+document.addEventListener("DOMContentLoaded", () => {
+    new TodoPanelController();
+});
+
+</script>
+</body>
+</html>

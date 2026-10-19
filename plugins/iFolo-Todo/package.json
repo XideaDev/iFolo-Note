@@ -1,0 +1,25 @@
+{
+  "name": "pi-desktop-plugin-ifolo-todo",
+  "version": "1.0.0",
+  "description": "iFolo Todo - 实时同步当前会话任务状态并汇总至 iFolo 原生代办笔记分类，提供任务追踪看板与极简速记。",
+  "main": "main.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w"
+  },
+  "keywords": [
+    "pi-desktop",
+    "plugin",
+    "ifolo",
+    "todo",
+    "notes",
+    "mcp",
+    "productivity"
+  ],
+  "author": "XideaDev",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.0"
+  }
+}

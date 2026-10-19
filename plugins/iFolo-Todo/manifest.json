@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.xideadev.ifolo-todo",
+  "name": "iFolo Todo",
+  "version": "1.0.0",
+  "description": "实时同步当前会话任务状态并汇总至 iFolo 原生代办笔记分类，提供任务追踪看板与极简速记。",
+  "author": "XideaDev",
+  "license": "MIT",
+  "main": "main.js",
+  "homepage": "https://www.ifolo.cn",
+  "repository": "https://github.com/XideaDev/iFolo",
+  "categories": [
+    "productivity",
+    "knowledge"
+  ],
+  "i18n": {
+    "en": {
+      "name": "iFolo Todo",
+      "description": "Real-time session task sync and aggregation into iFolo native todo categories, featuring an interactive task board and quick notes.",
+      "safetyNotes": "Communicates exclusively via local STDIO JSON-RPC 2.0 with the local iFolo app. Zero network requests, keeping all notes and embeddings on local disk."
+    },
+    "zh-CN": {
+      "name": "iFolo Todo",
+      "description": "实时同步当前会话任务状态并汇总至 iFolo 原生代办笔记分类，提供任务追踪看板与极简速记。",
+      "safetyNotes": "本插件仅通过本地 STDIO JSON-RPC 2.0 与本机的 iFolo 客户端通信。绝不上传任何网络请求，全部笔记数据与向量索引严格保留在本地 ~/Library/Application Support/iFolo/。"
+    }
+  },
+  "engines": {
+    "piDesktop": ">=0.14.0"
+  },
+  "activationEvents": [
+    "onStartup",
+    "onCommand:ifolo-todo.quickCapture",
+    "onCommand:ifolo-todo.openSidebar"
+  ],
+  "ui": {
+    "panel": "views/index.html",
+    "width": 420,
+    "height": 680,
+    "title": {
+      "en": "iFolo Todo",
+      "zh-CN": "iFolo Todo"
+    }
+  },
+  "contributes": {
+    "views": [
+      {
+        "id": "ifolo-todo-sidebar",
+        "title": {
+          "en": "iFolo Todo",
+          "zh-CN": "iFolo Todo"
+        },
+        "icon": "book",
+        "entry": "views/index.html",
+        "order": 30
+      }
+    ],
+    "skills": [
+      "skills/ifolo-knowledge.md"
+    ],
+    "commands": [
+      {
+        "id": "ifolo-todo.quickCapture",
+        "category": "iFolo Todo",
+        "title": "iFolo Todo: 快速记录备忘/沉淀至代办",
+        "keywords": [
+          "ifolo",
+          "todo",
+          "note",
+          "capture",
+          "便签",
+          "速记",
+          "待办"
+        ]
+      },
+      {
+        "id": "ifolo-todo.openSidebar",
+        "category": "iFolo Todo",
+        "title": "iFolo Todo: 打开待办侧栏",
+        "keywords": [
+          "ifolo",
+          "todo",
+          "sidebar",
+          "侧栏",
+          "待办"
+        ]
+      }
+    ]
+  },
+  "permissions": [
+    "ui.view",
+    "ui.panel",
+    "agent.extension",
+    "agent.prompt.inject"
+  ],
+  "safetyNotes": "本插件仅通过本地 STDIO JSON-RPC 2.0 与本机的 iFolo 客户端通信。绝不上传任何网络请求，全部笔记数据与向量索引严格保留在本地 ~/Library/Application Support/iFolo/。"
+}
