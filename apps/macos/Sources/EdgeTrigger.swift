@@ -41,6 +41,12 @@ final class EdgeTrigger {
     func start() {
         stop()
 
+        let enabled = UserDefaults.standard.object(forKey: "ifolo.edgeHover") as? Bool ?? true
+        guard enabled else {
+            Log.write("边缘触发未开启 (ifolo.edgeHover=false)，跳过监听器挂载")
+            return
+        }
+
         isPaused = false
         armed = true
 

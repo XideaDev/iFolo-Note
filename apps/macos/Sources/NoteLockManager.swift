@@ -78,6 +78,23 @@ public final class NoteLockManager {
         return cachedSessionKey
     }
 
+    /// 获取用于加密落盘的主密钥（优先使用当前会话密钥，未解锁时派生硬件主密钥以保证新建密文绝不以明文落盘）
+    public func encryptionKey() throws -> SymmetricKey {
+        if let key = currentSessionKey() {
+            return key
+        }
+        return try retrieveOrCreateMasterKey(allowPrompt: false)
+    }
+
+    /// 对独立密码进行加盐 SHA-256 哈希
+    public static func hashPassword(_ password: String) -> String {
+        let trimmed = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        let salted = "iFolo.VaultPwd.v1:" + trimmed
+        let digest = SHA256.hash(data: Data(salted.utf8))
+        return "sha256:" + digest.map { String(format: "%02x", $0) }.joined()
+    }
+
     // MARK: - 身份认证与会话管理
 
     /// 请求生物识别或系统密码授权，成功后建立会话并返回密钥
@@ -90,6 +107,14 @@ public final class NoteLockManager {
             return
         }
         sessionLock.unlock()
+
+        let touchIdEnabled = UserDefaults.standard.object(forKey: "ifolo.vaultTouchId") as? Bool ?? true
+        let savedPwd = (UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !touchIdEnabled && !savedPwd.isEmpty {
+            completion(.failure(.authenticationFailed("Touch ID 解锁已关闭，请使用独立密码解锁")))
+            return
+        }
+
         DispatchQueue.main.async {
             NSApp.activate(ignoringOtherApps: true)
         }
@@ -160,8 +185,20 @@ public final class NoteLockManager {
     public func unlockWithPassword(_ password: String) -> Result<SymmetricKey, NoteLockError> {
         let saved = (UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let input = password.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !saved.isEmpty && input != saved {
-            return .failure(.authenticationFailed("密码错误，请重新输入"))
+        if !saved.isEmpty {
+            let hashedInput = Self.hashPassword(input)
+            let matched: Bool
+            if saved.hasPrefix("sha256:") {
+                matched = (hashedInput == saved)
+            } else {
+                matched = (input == saved)
+                if matched {
+                    UserDefaults.standard.set(hashedInput, forKey: "ifolo.vaultPassword")
+                }
+            }
+            if !matched {
+                return .failure(.authenticationFailed("密码错误，请重新输入"))
+            }
         }
         do {
             let key = try retrieveOrCreateMasterKey()

@@ -1,5 +1,6 @@
 import WebKit
 import AppKit
+import ServiceManagement
 
 /// Web 内容与原生之间的消息桥。
 ///
@@ -274,6 +275,13 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
         case "setEdgeHover":
             if let enabled = params["enabled"] as? Bool {
                 UserDefaults.standard.set(enabled, forKey: "ifolo.edgeHover")
+                if enabled {
+                    if !PanelController.shared.isVisible {
+                        EdgeTrigger.shared.start()
+                    }
+                } else {
+                    EdgeTrigger.shared.stop()
+                }
                 Log.write("设置边缘贴靠触发: \(enabled)")
             }
             reply(id, ok: true, payload: NSNull())
@@ -290,6 +298,24 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
             if let enabled = params["enabled"] as? Bool {
                 UserDefaults.standard.set(enabled, forKey: "ifolo.autoHide")
                 Log.write("设置失焦自动隐藏: \(enabled)")
+            }
+            reply(id, ok: true, payload: NSNull())
+
+        case "setAutoStart":
+            if let enabled = params["enabled"] as? Bool {
+                UserDefaults.standard.set(enabled, forKey: "ifolo.autoStart")
+                if #available(macOS 13.0, *) {
+                    do {
+                        if enabled {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    } catch {
+                        Log.write("MessageBridge: 设置开机自启动状态返回: \(error)")
+                    }
+                }
+                Log.write("设置开机自动启动: \(enabled)")
             }
             reply(id, ok: true, payload: NSNull())
 
@@ -384,7 +410,7 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
         case "getVaultConfig":
             let timeout = UserDefaults.standard.object(forKey: "ifolo.vaultTimeout") as? Double ?? NoteLockManager.shared.autoLockTimeout
             let touchId = UserDefaults.standard.object(forKey: "ifolo.vaultTouchId") as? Bool ?? true
-            let hasPassword = UserDefaults.standard.string(forKey: "ifolo.vaultPassword") != nil
+            let hasPassword = !(UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             reply(id, ok: true, payload: [
                 "timeout": timeout,
                 "touchId": touchId,
@@ -399,8 +425,9 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                     UserDefaults.standard.removeObject(forKey: "ifolo.vaultPassword")
                     Log.write("MessageBridge: 已清除保险箱独立密码")
                 } else {
-                    UserDefaults.standard.set(trimmed, forKey: "ifolo.vaultPassword")
-                    Log.write("MessageBridge: 已设置保险箱独立密码")
+                    let hashed = NoteLockManager.hashPassword(trimmed)
+                    UserDefaults.standard.set(hashed, forKey: "ifolo.vaultPassword")
+                    Log.write("MessageBridge: 已设置保险箱独立密码 (SHA-256 哈希)")
                 }
             }
             reply(id, ok: true, payload: NSNull())

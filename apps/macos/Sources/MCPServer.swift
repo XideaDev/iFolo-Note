@@ -212,10 +212,18 @@ final class MCPServer {
             responseData = handleToolCall(id: id, params: request.params)
 
         case "resources/list":
+            guard MCPPermissionManager.shared.isGlobalEnabled else {
+                let errResp = MCPResponse<String>(id: id, result: nil, error: .internalError(message: "MCP 本地服务已在 iFolo 偏好设置中全局停用。"))
+                return try? JSONEncoder().encode(errResp)
+            }
             let resources = registeredResources()
             responseData = encodeResponse(id: id, result: MCPResourcesListResult(resources: resources))
 
         case "resources/read":
+            guard MCPPermissionManager.shared.isGlobalEnabled else {
+                let errResp = MCPResponse<String>(id: id, result: nil, error: .internalError(message: "MCP 本地服务已在 iFolo 偏好设置中全局停用。"))
+                return try? JSONEncoder().encode(errResp)
+            }
             responseData = handleResourceRead(id: id, params: request.params)
 
         default:
@@ -317,7 +325,7 @@ final class MCPServer {
         switch toolName {
         case "ifolo_list_notes":
             let limit = arguments["limit"] as? Int ?? 50
-            let notes = Store.shared.listNotes()
+            let notes = Store.shared.listNotes().filter { $0.isLocked != true && $0.folderId != "vault" }
             let sliced = Array(notes.prefix(limit))
             let formatted = sliced.map { n -> [String: Any] in
                 var d: [String: Any] = [
@@ -341,13 +349,16 @@ final class MCPServer {
             guard let noteId = sanitizeId(arguments["note_id"] as? String) else {
                 return encodeToolResult(id: id, text: "Error: Invalid or missing note_id parameter", isError: true)
             }
+            let notes = Store.shared.listNotes()
+            guard let targetNote = notes.first(where: { $0.id == noteId }) else {
+                return encodeToolResult(id: id, text: "Error: Note '\(noteId)' not found", isError: true)
+            }
+            if targetNote.isLocked == true || targetNote.folderId == "vault" {
+                return encodeToolResult(id: id, text: "Error (Permission Denied): 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 读取", isError: true)
+            }
             let content = Store.shared.read(id: noteId)
-            if content.isEmpty {
-                // 检查是否文件不存在
-                let notes = Store.shared.listNotes()
-                if !notes.contains(where: { $0.id == noteId }) {
-                    return encodeToolResult(id: id, text: "Error: Note '\(noteId)' not found", isError: true)
-                }
+            if content == "<!-- IFOLO_LOCKED_NOTE -->" {
+                return encodeToolResult(id: id, text: "Error (Permission Denied): 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 读取", isError: true)
             }
             let sensitiveResult = MCPPermissionManager.shared.evaluateSensitiveData(
                 content: content,
@@ -411,10 +422,16 @@ final class MCPServer {
                   let toAppend = arguments["content_to_append"] as? String else {
                 return encodeToolResult(id: id, text: "Error: Missing note_id or content_to_append", isError: true)
             }
-            let current = Store.shared.read(id: noteId)
             let notes = Store.shared.listNotes()
-            guard notes.contains(where: { $0.id == noteId }) else {
+            guard let targetNote = notes.first(where: { $0.id == noteId }) else {
                 return encodeToolResult(id: id, text: "Error: Note '\(noteId)' not found", isError: true)
+            }
+            if targetNote.isLocked == true || targetNote.folderId == "vault" {
+                return encodeToolResult(id: id, text: "Error (Permission Denied): 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 追加修改", isError: true)
+            }
+            let current = Store.shared.read(id: noteId)
+            if current == "<!-- IFOLO_LOCKED_NOTE -->" {
+                return encodeToolResult(id: id, text: "Error (Permission Denied): 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 追加修改", isError: true)
             }
             let separator = (current.isEmpty || current.hasSuffix("\n\n")) ? "" : (current.hasSuffix("\n") ? "\n" : "\n\n")
             let updated = current + separator + toAppend
@@ -464,7 +481,12 @@ final class MCPServer {
         }
 
         if uri == "ifolo://notes/recent" {
-            let notes = Store.shared.listNotes()
+            let authDecision = MCPPermissionManager.shared.verifyOrPrompt(tool: "ifolo_list_notes", arguments: ["uri": uri], clientName: "MCP Stdio Client")
+            if case .blocked(let reason) = authDecision {
+                let err = MCPError.internalError(message: "Permission Denied: \(reason)")
+                return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+            }
+            let notes = Store.shared.listNotes().filter { $0.isLocked != true && $0.folderId != "vault" }
             let list = Array(notes.prefix(20)).map { ["id": $0.id, "title": $0.title, "snippet": $0.snippet] }
             let text = serializeJSON(list) ?? "[]"
             let res = MCPResourceReadResult(contents: [MCPResourceContent(uri: uri, mimeType: "application/json", text: text)])
@@ -477,9 +499,36 @@ final class MCPServer {
         } else if uri.hasPrefix("ifolo://notes/") {
             let noteId = uri.replacingOccurrences(of: "ifolo://notes/", with: "")
             if let validId = sanitizeId(noteId) {
+                let authDecision = MCPPermissionManager.shared.verifyOrPrompt(tool: "ifolo_read_note", arguments: ["note_id": validId], clientName: "MCP Stdio Client")
+                if case .blocked(let reason) = authDecision {
+                    let err = MCPError.internalError(message: "Permission Denied: \(reason)")
+                    return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+                }
+                let notes = Store.shared.listNotes()
+                guard let targetNote = notes.first(where: { $0.id == validId }) else {
+                    let err = MCPError.invalidParams(message: "Resource not found: \(uri)")
+                    return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+                }
+                if targetNote.isLocked == true || targetNote.folderId == "vault" {
+                    let err = MCPError.internalError(message: "Permission Denied: 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 读取")
+                    return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+                }
                 let content = Store.shared.read(id: validId)
-                let safeContent = self.redactSensitiveInfo(content)
-                let res = MCPResourceReadResult(contents: [MCPResourceContent(uri: uri, mimeType: "text/markdown", text: safeContent)])
+                if content == "<!-- IFOLO_LOCKED_NOTE -->" {
+                    let err = MCPError.internalError(message: "Permission Denied: 加密保险箱笔记受硬件隐私保护，禁止通过 MCP 读取")
+                    return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+                }
+                let sensitiveResult = MCPPermissionManager.shared.evaluateSensitiveData(
+                    content: content,
+                    tool: "ifolo_read_note",
+                    arguments: ["note_id": validId, "uri": uri],
+                    clientName: "MCP Stdio Client"
+                )
+                if !sensitiveResult.allowed {
+                    let err = MCPError.internalError(message: "Permission Denied: \(sensitiveResult.reason ?? "受敏感数据安全策略拦截")")
+                    return try? JSONEncoder().encode(MCPResponse<String>(id: id, result: nil, error: err))
+                }
+                let res = MCPResourceReadResult(contents: [MCPResourceContent(uri: uri, mimeType: "text/markdown", text: sensitiveResult.processedContent)])
                 return encodeResponse(id: id, result: res)
             }
         }

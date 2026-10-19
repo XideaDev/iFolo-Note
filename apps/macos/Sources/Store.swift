@@ -268,16 +268,19 @@ final class Store {
         )
 
         if isVault {
-            if NoteLockManager.shared.currentSessionKey() != nil {
-                write(id: id, markdown: initialContent)
-            } else {
-                let url = notesDir.appendingPathComponent("\(id).md")
-                try? initialContent.write(to: url, atomically: true, encoding: .utf8)
-                cacheLock.lock()
-                metaCache[id] = CachedNoteRecord(mtime: Date().timeIntervalSince1970, title: initialTitle, snippet: "", tags: [], hasTodo: false, isLocked: true)
-                saveMetaCacheLocked()
-                cacheLock.unlock()
+            let url = notesDir.appendingPathComponent("\(id).md")
+            if let key = try? NoteLockManager.shared.encryptionKey(),
+               let envelope = try? NoteLockManager.shared.encrypt(markdown: initialContent, with: key) {
+                try? envelope.write(to: url, options: .atomic)
+                try? FileManager.default.setAttributes([
+                    FileAttributeKey.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication
+                ], ofItemAtPath: url.path)
             }
+            cacheLock.lock()
+            metaCache[id] = CachedNoteRecord(mtime: Date().timeIntervalSince1970, title: initialTitle, snippet: "", tags: [], hasTodo: false, isLocked: true)
+            saveMetaCacheLocked()
+            cacheLock.unlock()
+            SearchEngine.shared.removeNote(id: id)
         } else {
             write(id: id, markdown: initialContent)
         }
@@ -288,6 +291,10 @@ final class Store {
     }
 
     func write(id: String, markdown: String) {
+        if markdown == "<!-- IFOLO_LOCKED_NOTE -->" {
+            Log.write("拦截将锁定占位符写入笔记 \(id)")
+            return
+        }
         let url = notesDir.appendingPathComponent("\(id).md")
         let folderData = loadFolderData()
         let isLocked = folderData.lockedNotes?[id] == true || folderData.noteFolders[id] == "vault"
@@ -302,7 +309,9 @@ final class Store {
                         Log.write("跳过未鉴权的写入以保护密文 \(id)")
                         return
                     }
-                    try markdown.write(to: url, atomically: true, encoding: .utf8)
+                    let key = try NoteLockManager.shared.encryptionKey()
+                    let envelope = try NoteLockManager.shared.encrypt(markdown: markdown, with: key)
+                    try envelope.write(to: url, options: .atomic)
                 }
             } else {
                 try markdown.write(to: url, atomically: true, encoding: .utf8)
@@ -663,6 +672,8 @@ final class Store {
         ]
         if let data = try? Data(contentsOf: foldersFile),
            var decoded = try? JSONDecoder().decode(FolderStoreData.self, from: data) {
+            let oldIds = decoded.folders.map { $0.id }
+            let oldNames = decoded.folders.map { $0.name }
             decoded.folders.removeAll(where: { $0.id == "note" })
             for i in 0..<decoded.folders.count {
                 if decoded.folders[i].id == "todo" {
@@ -672,7 +683,9 @@ final class Store {
             // 强制保证前三位系统分类固定排序：全部 -> 保险箱 -> Todos
             let custom = decoded.folders.filter { $0.id != "vault" && $0.id != "all" && $0.id != "todo" }
             decoded.folders = systemFolders + custom
-            saveFolderData(decoded)
+            if decoded.folders.map({ $0.id }) != oldIds || decoded.folders.map({ $0.name }) != oldNames {
+                saveFolderData(decoded)
+            }
             return decoded
         }
         let initialData = FolderStoreData(folders: systemFolders, noteFolders: [:], pinnedNotes: [:], lockedNotes: [:])
@@ -738,6 +751,16 @@ final class Store {
 
     func rename(id: String, title: String) {
         let current = read(id: id)
+        if current == "<!-- IFOLO_LOCKED_NOTE -->" {
+            cacheLock.lock()
+            if var cached = metaCache[id] {
+                cached.title = title
+                metaCache[id] = cached
+                saveMetaCacheLocked()
+            }
+            cacheLock.unlock()
+            return
+        }
         var lines = current.components(separatedBy: "\n")
         let heading = "# \(title)"
         if let first = lines.first, first.hasPrefix("#") {

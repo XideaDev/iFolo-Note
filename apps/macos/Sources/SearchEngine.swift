@@ -45,7 +45,13 @@ final class SearchEngine {
             guard let self = self else { return }
             Log.write("语义检索引擎开始预热索引，共 \(notes.count) 篇笔记")
             for note in notes {
+                if note.isLocked == true || note.folderId == "vault" {
+                    continue
+                }
                 let markdown = Store.shared.read(id: note.id)
+                if markdown == "<!-- IFOLO_LOCKED_NOTE -->" {
+                    continue
+                }
                 self.indexInternal(id: note.id, markdown: markdown)
             }
             Log.write("语义检索引擎索引就绪，已构建 \(self.vectorCache.count) 条笔记向量")
@@ -127,6 +133,9 @@ final class SearchEngine {
         var scoredResults = [(note: NoteMeta, score: Double, matchedText: String)]()
 
         for note in notes {
+            if note.isLocked == true || note.folderId == "vault" {
+                continue
+            }
             let noteId = note.id
             let paragraphs = paragraphCache[noteId] ?? []
             let docVector = vectorCache[noteId]
