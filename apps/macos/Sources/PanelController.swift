@@ -253,7 +253,11 @@ final class PanelController: NSObject, WKUIDelegate {
             panel.setFrame(panelRect(on: screen), display: true, animate: false)
             NSAnimationContext.endGrouping()
         } else {
-            panel.setFrame(panelRect(on: screen), display: true, animate: true)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.28
+                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
+                panel.animator().setFrame(self.panelRect(on: screen), display: true)
+            }
         }
         Log.write("面板宽度更新为 \(width) (animated: \(animated))")
     }
