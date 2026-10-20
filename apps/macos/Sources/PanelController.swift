@@ -10,11 +10,11 @@ final class PanelController: NSObject, WKUIDelegate {
     private var webView: WKWebView?
     private var outsideMonitor: Any?
 
-    /// 计算当前允许的最大宽度（屏幕可见宽度的一半，至少 720pt）
+    /// 计算当前允许的最大宽度（分屏能力上限提升到 62% 屏宽，至少 900pt，上限 1200pt）
     func maxAllowedWidth(on screen: NSScreen? = nil) -> CGFloat {
         let scr = screen ?? targetScreen()
-        let half = floor(scr.visibleFrame.width / 2.0)
-        return max(720, half)
+        let wide = floor(scr.visibleFrame.width * 0.62)
+        return max(900, min(1200, wide))
     }
 
     /// 面板尺寸。宽度支持 320–(屏幕一半) 可调，默认 432
@@ -243,12 +243,19 @@ final class PanelController: NSObject, WKUIDelegate {
         Log.write("请求新建快速笔记")
     }
 
-    /// 调节面板宽度（320–屏幕一半）
-    func setWidth(_ width: CGFloat) {
+    /// 调节面板宽度（320–屏幕允许上限），支持平滑动画
+    func setWidth(_ width: CGFloat, animated: Bool = false) {
         panelWidth = width
         guard let panel, let screen = panel.screen ?? NSScreen.main else { return }
-        panel.setFrame(panelRect(on: screen), display: true, animate: false)
-        Log.write("面板宽度更新为 \(width)")
+        if !animated {
+            NSAnimationContext.beginGrouping()
+            NSAnimationContext.current.duration = 0
+            panel.setFrame(panelRect(on: screen), display: true, animate: false)
+            NSAnimationContext.endGrouping()
+        } else {
+            panel.setFrame(panelRect(on: screen), display: true, animate: true)
+        }
+        Log.write("面板宽度更新为 \(width) (animated: \(animated))")
     }
 
 

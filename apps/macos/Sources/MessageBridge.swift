@@ -159,7 +159,8 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
 
         case "setWidth":
             if let value = params["width"] as? Double {
-                PanelController.shared.setWidth(CGFloat(value))
+                let animated = (params["animated"] as? Bool) ?? false
+                PanelController.shared.setWidth(CGFloat(value), animated: animated)
             }
             reply(id, ok: true, payload: NSNull())
 
