@@ -33,7 +33,7 @@ final class PanelWindow: NSPanel {
         becomesKeyOnlyIfNeeded = false
         hidesOnDeactivate = false
         isMovable = false
-        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         animationBehavior = .utilityWindow
     }
 

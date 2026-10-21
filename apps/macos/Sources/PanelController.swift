@@ -10,7 +10,7 @@ final class PanelController: NSObject, WKUIDelegate {
     private var webView: WKWebView?
     private var outsideMonitor: Any?
     private var installOutsideTask: DispatchWorkItem?
-
+    private var spaceObserver: NSObjectProtocol?
     /// 计算当前允许的最大宽度（分屏能力上限提升到 62% 屏宽，至少 900pt，上限 1200pt）
     func maxAllowedWidth(on screen: NSScreen? = nil) -> CGFloat {
         let scr = screen ?? targetScreen()
@@ -47,21 +47,55 @@ final class PanelController: NSObject, WKUIDelegate {
         }
     }
 
-    private override init() { super.init() }
+    private override init() {
+        super.init()
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleSpaceChange()
+        }
+    }
+
+    deinit {
+        if let spaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
+        }
+    }
+
+    private func handleSpaceChange() {
+        guard let panel else { return }
+        Log.write("感知到活动桌面 (Space) 切换: isVisible=\(panel.isVisible)")
+        if panel.isVisible {
+            // 在新 Space 下重新适应物理尺寸与位置
+            reposition(panel)
+            // 确保窗口在目标 Space 渲染树中保持可见
+            panel.orderFrontRegardless()
+            // 重新挂载外部点击监听
+            scheduleOutsideMonitor()
+            takeKey()
+        } else {
+            // 确保边缘触发在新桌面武装就绪
+            EdgeTrigger.shared.resume()
+        }
+    }
 
     func updateWindowLevel() {
         guard let panel else { return }
         if isAlwaysOnTop {
-            panel.level = .floating
+            panel.level = NSWindow.Level(Int(CGWindowLevelForKey(.floatingWindow)) + 1)
         } else {
-            panel.level = .normal
+            panel.level = .floating
         }
         Log.write("面板置顶状态更新: isAlwaysOnTop=\(isAlwaysOnTop), level=\(panel.level.rawValue)")
     }
 
     /// 切换窗口全局置顶状态
+    /// 切换窗口全局置顶状态
     func toggleAlwaysOnTop() {
         isAlwaysOnTop = !isAlwaysOnTop
+        Telemetry.shared.track(name: "always_on_top_toggled", properties: ["is_always_on_top": isAlwaysOnTop])
         evaluate("window.__ifoloSyncAlwaysOnTop && window.__ifoloSyncAlwaysOnTop(\(isAlwaysOnTop))")
     }
 
@@ -81,8 +115,8 @@ final class PanelController: NSObject, WKUIDelegate {
             return
         }
 
-        // 面板已显示期间，完全移除全局鼠标移动监听，杜绝 IPC 干扰与掉帧
-        EdgeTrigger.shared.stop()
+        // 面板已显示期间暂停边缘触发，避免重复计时
+        EdgeTrigger.shared.pause()
 
         reposition(panel)
         panel.orderFrontRegardless()
@@ -96,8 +130,8 @@ final class PanelController: NSObject, WKUIDelegate {
         guard let panel else { return }
         removeOutsideMonitor()
         panel.orderOut(nil)
-        // 面板收起后，重新启动屏幕边缘触发监听
-        EdgeTrigger.shared.start()
+        // 面板收起后，恢复屏幕边缘触发监听
+        EdgeTrigger.shared.resume()
         Log.write("面板隐藏")
     }
 

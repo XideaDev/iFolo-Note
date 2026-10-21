@@ -26,8 +26,8 @@ final class EdgeTrigger {
     private var dwellTimer: Timer?
     private var armed = true
     private var screenObserver: NSObjectProtocol?
+    private var spaceObserver: NSObjectProtocol?
     private var pollTimer: Timer?
-
     private(set) var isPaused = false
 
     struct TriggerZone {
@@ -58,7 +58,17 @@ final class EdgeTrigger {
         ) { [weak self] _ in
             self?.updateScreenCache()
         }
-
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.cancelDwell()
+            self.armed = true
+            self.updateScreenCache()
+            Log.write("桌面空间变更，边缘触发缓存已同步刷新")
+        }
         // 全局监听不会收到发给本 App 的事件，所以面板内的移动天然被忽略
         // 1. 全局鼠标移动监听
         monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
@@ -90,6 +100,10 @@ final class EdgeTrigger {
             NotificationCenter.default.removeObserver(screenObserver)
             self.screenObserver = nil
         }
+        if let spaceObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
+            self.spaceObserver = nil
+        }
         pollTimer?.invalidate()
         pollTimer = nil
         cancelDwell()
@@ -103,8 +117,8 @@ final class EdgeTrigger {
     func resume() {
         isPaused = false
         armed = true
+        updateScreenCache()
     }
-
     /// 动态更新鼠标悬停等待时长并即时生效
     func updateDwell(_ newDwell: TimeInterval) {
         let clamped = max(0.05, min(2.0, newDwell))
@@ -227,6 +241,7 @@ final class EdgeTrigger {
             guard self.armed, !self.isPaused, !PanelController.shared.isVisible else { return }
             self.armed = false
             Log.write("边缘触发命中，展开面板")
+            Telemetry.shared.track(name: "panel_edge_triggered", properties: ["dwell_ms": Int(round(self.dwell * 1000))])
             PanelController.shared.show()
         }
         // .common 模式，否则菜单或弹窗打开时 run loop 切模式会让计时器停摆

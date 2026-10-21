@@ -65,6 +65,7 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
                 "isVaultUnlocked": NoteLockManager.shared.hasActiveSession,
                 "hasVaultPassword": !(UserDefaults.standard.string(forKey: "ifolo.vaultPassword") ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                 "isAlwaysOnTop": PanelController.shared.isAlwaysOnTop,
+                "telemetryEnabled": Telemetry.shared.isEnabled,
                 "updateConfig": [
                     "automaticallyChecksForUpdates": UpdateManager.shared.automaticallyChecksForUpdates,
                     "automaticallyDownloadsUpdates": UpdateManager.shared.automaticallyDownloadsUpdates,
@@ -472,6 +473,22 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
         case "getAlwaysOnTop":
             reply(id, ok: true, payload: PanelController.shared.isAlwaysOnTop)
 
+        case "trackEvent":
+            let name = params["name"] as? String ?? ""
+            let props = params["properties"] as? [String: Any] ?? [:]
+            if !name.isEmpty {
+                Telemetry.shared.track(name: name, properties: props)
+            }
+            reply(id, ok: true, payload: true)
+
+        case "setTelemetryEnabled":
+            let enabled = params["enabled"] as? Bool ?? true
+            Telemetry.shared.isEnabled = enabled
+            Log.write("MessageBridge: 匿名遥测开关设置为 \(enabled)")
+            reply(id, ok: true, payload: enabled)
+
+        case "getTelemetryEnabled":
+            reply(id, ok: true, payload: Telemetry.shared.isEnabled)
         default:
             Log.write("未知方法：\(method)")
             reply(id, ok: false, payload: "未知方法 \(method)")

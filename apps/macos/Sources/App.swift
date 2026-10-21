@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = StatusItem()
 
         let trigger = EdgeTrigger.shared
-        trigger.zoneWidth = 6
+        trigger.zoneWidth = 8
         let savedDelay = UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15
         trigger.dwell = max(0.05, min(2.0, savedDelay))
         trigger.start()
@@ -96,6 +96,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        Telemetry.shared.track(name: "app_launched", properties: [
+            "edge_delay": trigger.dwell,
+        ])
         Log.write("启动完成：状态栏图标已就位，边缘触发已启动，快捷键已注册")
     }
 
