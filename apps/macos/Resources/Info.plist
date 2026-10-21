@@ -2,54 +2,53 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleExecutable</key>
-	<string>iFolo</string>
-	<key>CFBundleIdentifier</key>
-	<string>app.ifolo.macos</string>
-	<key>CFBundleName</key>
-	<string>iFolo</string>
-	<key>CFBundleDisplayName</key>
-	<string>iFolo</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>zh-Hans</string>
+	<key>CFBundleDisplayName</key>
+	<string>iFolo</string>
+	<key>CFBundleExecutable</key>
+	<string>iFolo</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleIdentifier</key>
+	<string>app.ifolo.macos</string>
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>zh-Hans</string>
 		<string>zh_CN</string>
 		<string>en</string>
 	</array>
+	<key>CFBundleName</key>
+	<string>iFolo</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.3.1</string>
+	<string>0.3.2</string>
 	<key>CFBundleVersion</key>
 	<string>4</string>
-	<key>CFBundleIconFile</key>
-	<string>AppIcon</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>MIT</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>MIT</string>
-	<!-- Sparkle 2 自动更新配置 -->
+	<key>SUAllowsAutomaticUpdates</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/XideaDev/iFolo-Note/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>MDsrXBhOBdljcIiGQpFXvslxi7kd6L1igfzr3+SwFdM=</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
-	<key>SUAllowsAutomaticUpdates</key>
-	<true/>
 </dict>
 </plist>
