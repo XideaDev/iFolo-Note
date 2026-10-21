@@ -9,6 +9,7 @@ final class PanelController: NSObject, WKUIDelegate {
     private var panel: PanelWindow?
     private var webView: WKWebView?
     private var outsideMonitor: Any?
+    private var installOutsideTask: DispatchWorkItem?
 
     /// 计算当前允许的最大宽度（分屏能力上限提升到 62% 屏宽，至少 900pt，上限 1200pt）
     func maxAllowedWidth(on screen: NSScreen? = nil) -> CGFloat {
@@ -84,10 +85,9 @@ final class PanelController: NSObject, WKUIDelegate {
         EdgeTrigger.shared.stop()
 
         reposition(panel)
-        // 必须用 orderFrontRegardless —— makeKeyAndOrderFront 在 App 非激活时会拒绝显示
         panel.orderFrontRegardless()
         takeKey()
-        installOutsideMonitor()
+        scheduleOutsideMonitor()
         webView?.evaluateJavaScript("window.__ifoloRefreshNotes && window.__ifoloRefreshNotes(); window.__ifoloFocus && window.__ifoloFocus(); window.__ifoloWindowActivated && window.__ifoloWindowActivated();")
         updateWindowLevel()
     }
@@ -205,9 +205,20 @@ final class PanelController: NSObject, WKUIDelegate {
     }
 
     // MARK: - 点外部收起
+    private func scheduleOutsideMonitor() {
+        installOutsideTask?.cancel()
+        removeOutsideMonitor()
+        let task = DispatchWorkItem { [weak self] in
+            guard let self, self.isVisible else { return }
+            self.installOutsideMonitor()
+        }
+        installOutsideTask = task
+        // 延迟 180ms 挂载，彻底避开呼出动作期间鼠标点击的物理释放与微颤
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18, execute: task)
+    }
 
     private func installOutsideMonitor() {
-        guard outsideMonitor == nil else { return }
+        guard outsideMonitor == nil, isVisible else { return }
         // 全局监听不会收到发给本 App 的事件，所以面板内部的点击天然被忽略
         outsideMonitor = NSEvent.addGlobalMonitorForEvents(
             matching: [.leftMouseDown, .rightMouseDown]
@@ -215,6 +226,14 @@ final class PanelController: NSObject, WKUIDelegate {
             guard let self = self else { return }
             // 全局置顶模式下钉在桌面最前，点击外部不触发收起
             if self.isAlwaysOnTop { return }
+            // 过滤：如果点击位置位于面板窗口本身或状态栏菜单区域，不触发外部收起
+            if let panel = self.panel {
+                let loc = NSEvent.mouseLocation
+                if panel.frame.contains(loc) { return }
+                if let scr = panel.screen, loc.y >= (scr.frame.maxY - 32) && loc.x >= (scr.frame.maxX - 200) {
+                    return
+                }
+            }
             // 判断是否启用失焦自动隐藏（默认 true，若用户关闭则不收起）
             let autoHide = UserDefaults.standard.object(forKey: "ifolo.autoHide") as? Bool ?? true
             if autoHide {
@@ -224,12 +243,13 @@ final class PanelController: NSObject, WKUIDelegate {
     }
 
     private func removeOutsideMonitor() {
+        installOutsideTask?.cancel()
+        installOutsideTask = nil
         if let monitor = outsideMonitor {
             NSEvent.removeMonitor(monitor)
             outsideMonitor = nil
         }
     }
-
     // MARK: - 供 Bridge 调用
 
     func evaluate(_ js: String) {

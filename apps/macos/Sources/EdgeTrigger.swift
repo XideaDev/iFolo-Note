@@ -15,8 +15,8 @@ final class EdgeTrigger {
     static let shared = EdgeTrigger()
 
     /// 触发区宽度（点）。3pt 是「能碰到但不误触」的平衡点。
-    /// 触发区宽度（点）。6pt 确保高分辨率与高速划过时可靠捕获
-    var zoneWidth: CGFloat = 6
+    /// 触发区宽度（点）。8pt 确保高分辨率与高速划过时可靠捕获
+    var zoneWidth: CGFloat = 8
     /// 指针需要在触发区停留多久才展开面板（默认 0.15 秒，即 150ms）
     var dwell: TimeInterval = 0.15
     /// 默认支持在光标所在的任何屏幕边缘触发
@@ -180,7 +180,7 @@ final class EdgeTrigger {
 
         let location = NSEvent.mouseLocation
 
-        // 2. 粗筛（Pre-filter）：若鼠标 X 坐标在触发区左侧，单浮点比较直接退出（< 10ns）
+        // 2. 自愈死锁保障：若面板已关闭且处于非热区，确保 armed 准星复位
         if location.x < minZoneX {
             if dwellTimer != nil { cancelDwell() }
             armed = true
@@ -189,17 +189,30 @@ final class EdgeTrigger {
 
         // 3. 精筛：从缓存的触发区检测，零 IPC、零内存分配
         var inZone = false
+        var inHysteresisZone = false
         for zone in cachedZones {
             if zone.triggerRect.contains(location) {
                 inZone = true
                 break
             }
+            // 滞回容差区：已进入热区后，允许手部向左微抖 16pt 而不重置计时器
+            let hysteresisRect = NSRect(
+                x: zone.triggerRect.minX - 16,
+                y: zone.triggerRect.minY,
+                width: zone.triggerRect.width + 16,
+                height: zone.triggerRect.height
+            )
+            if hysteresisRect.contains(location) {
+                inHysteresisZone = true
+            }
         }
 
         if inZone {
-            // 面板已经开着就不用再触发了
             guard armed else { return }
             startDwell()
+        } else if inHysteresisZone && dwellTimer != nil {
+            // 处在滞回缓冲区且计时器正在跑，不打断用户动作
+            return
         } else {
             cancelDwell()
             armed = true
