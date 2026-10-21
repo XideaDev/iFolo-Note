@@ -243,6 +243,11 @@ final class PanelController: NSObject, WKUIDelegate {
         Log.write("请求新建快速笔记")
     }
 
+    /// 原生快捷键关闭当前编辑标签页 (⌘W)
+    func closeCurrentTab() {
+        evaluate("window.__ifoloCloseCurrentTab && window.__ifoloCloseCurrentTab()")
+        Log.write("请求关闭当前编辑标签页")
+    }
     /// 调节面板宽度（320–屏幕允许上限），支持平滑动画
     func setWidth(_ width: CGFloat, animated: Bool = false) {
         panelWidth = width

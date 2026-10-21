@@ -39,8 +39,10 @@ final class PanelWindow: NSPanel {
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         // 处理非激活浮动面板内的标准编辑快捷键（复制、粘贴、全选、剪切、撤销）
-        if event.modifierFlags.contains(.command) {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if flags.contains(.command) {
             let key = event.charactersIgnoringModifiers?.lowercased()
+            let isWKey = key == "w" || event.keyCode == 13
             if key == "v" {
                 if NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: self) {
                     return true
@@ -57,6 +59,9 @@ final class PanelWindow: NSPanel {
                 if NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: self) {
                     return true
                 }
+            } else if isWKey {
+                PanelController.shared.closeCurrentTab()
+                return true
             }
         }
         return super.performKeyEquivalent(with: event)
