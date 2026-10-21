@@ -6,6 +6,16 @@
         <description>iFolo Note macOS 最新版本与安全修复发布频道</description>
         <language>zh-CN</language>
         <item>
+            <title>iFolo Note v1.0.0</title>
+            <pubDate>Wed, 21 Oct 2026 18:17:19 +0000</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>iFolo Note v1.0.0 正式发布：\n- 密码锁屏界面全新重构：去除外层卡片边框与阴影，打造一体化无缝视觉，隐藏未解锁状态下的敏感标题\n- 强化多虚拟桌面（Spaces）与全屏应用适配，彻底解决跨桌面平移时窗口丢失与边缘热区停摆缺陷\n- 开发者页面新增 4 组高质量多维度演示数据集，支持无级调节与真实数据零丢失一键还原\n- 正式集成 OpenPanel 官方遥测分析 SDK 与远程 MCP 服务联合配置</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-arm64.dmg" length="2091683" type="application/octet-stream" sparkle:edSignature="1RU9GVKzkoff45s0ST7OEuh0I+w6VB/maAlIE/AJUz8oaBBMMBTEpDhmW3Xym6QwFsQDzK40LEaNRXQiVyqcBg==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-x86_64.dmg" length="2111330" type="application/octet-stream" sparkle:edSignature="BxVl+o2N+KQenmZaDDzoq6mvI50d7jAIded4F8izWg2+GOgHrMkaKLnkePRNqnIeiLN/Lk0OSZXzSG9VNqPwDQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+        <item>
             <title>iFolo Note v0.3.1</title>
             <pubDate>Mon, 19 Oct 2026 03:57:43 +0000</pubDate>
             <sparkle:version>4</sparkle:version>
