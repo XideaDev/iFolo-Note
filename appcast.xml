@@ -7,13 +7,13 @@
         <language>zh-CN</language>
         <item>
             <title>iFolo Note v1.0.0</title>
-            <pubDate>Thu, 22 Oct 2026 02:06:07 +0000</pubDate>
+            <pubDate>Thu, 22 Oct 2026 02:12:13 +0000</pubDate>
             <sparkle:version>8</sparkle:version>
             <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <description>&lt;p&gt;&lt;b&gt;优化新建笔记数据同步链路：重构元数据乐观即时更新与 ProseMirror 事务流转，彻底解决新建笔记返回主页时延迟闪烁空白笔记的问题，实现返回瞬间 0 延迟渲染最新标题&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;重构正文副标题提取与清洗算法&lt;/b&gt;：智能过滤 Markdown 表格对齐分隔线、水平分割线及代码块围栏，提取整洁自然文本；完善单行长文本承接逻辑，超出标题截断部分自动作为副标题展示；细化状态展示：真正全空笔记弱化显示空白笔记，有标题无附文规范弱化显示暂无正文&lt;/li&gt;&lt;li&gt;&lt;b&gt;双端核心算法对齐&lt;/b&gt;：对齐 macOS Swift 原生存储层与 Web 视图摘要提取及搜索匹配，保证冷热运行体验一致&lt;/li&gt;&lt;/ul&gt;</description>
-            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-arm64.dmg" length="2094222" type="application/octet-stream" sparkle:edSignature="atpfJl3JbEXk2sgt/IQRxmVZfsQJ8EMmRbCtown/8i0/NqIX8WQrnVxRYvXS6dYvcxo9TKChXUhtHCyyuSEEBg==" sparkle:os="macos" sparkle:cpu="arm64"/>
-            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-x86_64.dmg" length="2114108" type="application/octet-stream" sparkle:edSignature="2ohw8eeKF5aPyyd6bVS6/CA0gzCUbec0mLHiXVHm8cqiyVNnaBs6s8MBLx9yVDVqXrWq5ViUCSyo68UqmKHeBQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b8-arm64.dmg" length="2094222" type="application/octet-stream" sparkle:edSignature="atpfJl3JbEXk2sgt/IQRxmVZfsQJ8EMmRbCtown/8i0/NqIX8WQrnVxRYvXS6dYvcxo9TKChXUhtHCyyuSEEBg==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b8-x86_64.dmg" length="2114108" type="application/octet-stream" sparkle:edSignature="2ohw8eeKF5aPyyd6bVS6/CA0gzCUbec0mLHiXVHm8cqiyVNnaBs6s8MBLx9yVDVqXrWq5ViUCSyo68UqmKHeBQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
         </item>
         <item>
             <title>iFolo Note v1.0.0</title>

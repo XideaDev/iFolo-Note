@@ -67,14 +67,17 @@ def build_appcast(
     ed_key: str = None,
     repo_url: str = "https://github.com/XideaDev/iFolo-Note"
 ):
-    arm_dmg = os.path.join(dist_dir, f"iFolo-{version}-arm64.dmg")
+    arm_dmg = os.path.join(dist_dir, f"iFolo-{version}-b{build_num}-arm64.dmg")
+    if not os.path.exists(arm_dmg):
+        arm_dmg = os.path.join(dist_dir, f"iFolo-{version}-arm64.dmg")
     if not os.path.exists(arm_dmg):
         arm_dmg = os.path.join(dist_dir, "iFolo-arm64.dmg")
 
-    x86_dmg = os.path.join(dist_dir, f"iFolo-{version}-x86_64.dmg")
+    x86_dmg = os.path.join(dist_dir, f"iFolo-{version}-b{build_num}-x86_64.dmg")
+    if not os.path.exists(x86_dmg):
+        x86_dmg = os.path.join(dist_dir, f"iFolo-{version}-x86_64.dmg")
     if not os.path.exists(x86_dmg):
         x86_dmg = os.path.join(dist_dir, "iFolo-x86_64.dmg")
-
     if not os.path.exists(arm_dmg) and not os.path.exists(x86_dmg):
         raise FileNotFoundError(f"未找到可签名的 DMG 文件。dist_dir={dist_dir}")
 
