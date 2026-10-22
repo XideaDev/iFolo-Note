@@ -859,27 +859,35 @@ final class Store {
         var res = text
         // 1. 移除 HTML 标签与代码块围栏
         res = res.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        res = res.replacingOccurrences(of: "<!--[\\s\\S]*?-->", with: "", options: .regularExpression)
         res = res.replacingOccurrences(of: "```[a-zA-Z0-9_-]*", with: "", options: .regularExpression)
-        // 2. 移除引用符与转义反斜杠
+        // 2. 移除表格分隔对齐线与水平分割线
+        res = res.replacingOccurrences(of: "^\\|?\\s*(?::?-+:?\\s*\\|)+\\s*(?::?-+:?)?\\s*$", with: "", options: .regularExpression)
+        res = res.replacingOccurrences(of: "^\\s*([-*_]){3,}\\s*$", with: "", options: .regularExpression)
+        // 3. 移除引用符与转义反斜杠
         res = res.replacingOccurrences(of: "^(?:>\\s*)+", with: "", options: .regularExpression)
         res = res.replacingOccurrences(of: "(?:^|\\s)>\\s*", with: " ", options: .regularExpression)
         res = res.replacingOccurrences(of: "\\\\([>#*`_~\\[\\]\\-\\+])", with: "$1", options: .regularExpression)
-        // 3. 移除列表项目符号 (- , * , + , 1. )
-        res = res.replacingOccurrences(of: "^\\s*(?:[-*+]|\\d+\\.)\\s+", with: "", options: .regularExpression)
-        // 4. 移除 Markdown 链接与图片符号 [text](url) -> text
+        // 4. 移除列表项目符号 (- , * , + , 1. )
+        res = res.replacingOccurrences(of: "^\\s*(?:[-*+]|\\d+[.)、])\\s*(?:\\[[^\\]]*\\]\\s*)?", with: "", options: .regularExpression)
+        // 5. 移除 Markdown 链接与图片符号 [text](url) -> text
         res = res.replacingOccurrences(of: "!?\\[([^\\]]*)\\]\\([^)]+\\)", with: "$1", options: .regularExpression)
-        // 5. 移除粗体、斜体、删除线、行内代码符号 (**text**, *text*, ~~text~~, `text`)
+        // 6. 移除粗体、斜体、删除线、行内代码符号 (**text**, *text*, ~~text~~, `text`)
         res = res.replacingOccurrences(of: "\\*\\*([^*]+)\\*\\*", with: "$1", options: .regularExpression)
         res = res.replacingOccurrences(of: "__([^_]+)__", with: "$1", options: .regularExpression)
         res = res.replacingOccurrences(of: "~~([^~]+)~~", with: "$1", options: .regularExpression)
         res = res.replacingOccurrences(of: "`([^`]+)`", with: "$1", options: .regularExpression)
         res = res.replacingOccurrences(of: "(?<!\\w)\\*([^*]+)\\*(?!\\w)", with: "$1", options: .regularExpression)
         res = res.replacingOccurrences(of: "(?<!\\w)_([^_]+)_(?!\\w)", with: "$1", options: .regularExpression)
-        // 6. 移除剩余的孤立语法符号
+        // 7. 移除表格竖线
+        res = res.replacingOccurrences(of: "\\|", with: " ")
+        // 8. 移除剩余的孤立语法符号
         res = res.replacingOccurrences(of: "(?:\\*\\*|__|~~|`)+", with: "", options: .regularExpression)
-        // 7. 过滤标签（保留 C#、#123）
+        // 9. 过滤标签（保留 C#、#123）
         res = res.replacingOccurrences(of: "#[^#\\s,]+#?", with: "", options: .regularExpression)
         res = res.replacingOccurrences(of: "#+", with: "", options: .regularExpression)
+        // 10. 压缩连续多余空格
+        res = res.replacingOccurrences(of: "[ \\t]+", with: " ", options: .regularExpression)
         return res.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -905,6 +913,7 @@ final class Store {
                 } else if cleaned.hasPrefix("- ") || cleaned.hasPrefix("* ") {
                     cleaned = String(cleaned.dropFirst(2)).trimmingCharacters(in: .whitespaces)
                 }
+                cleaned = cleanText(cleaned)
                 if !cleaned.isEmpty {
                     return cleaned.count > 40 ? String(cleaned.prefix(40)) + "…" : cleaned
                 }
@@ -953,7 +962,17 @@ final class Store {
             }
             cleaned = cleanText(cleaned)
             if !cleaned.isEmpty {
-                return cleaned.count > 60 ? String(cleaned.prefix(60)) + "…" : cleaned
+                return cleaned.count > 70 ? String(cleaned.prefix(70)) + "…" : cleaned
+            }
+        }
+        if let tIdx = titleLineIndex {
+            let line = lines[tIdx].trimmingCharacters(in: .whitespaces)
+            let cleaned = cleanText(String(line.drop { $0 == "#" }))
+            if cleaned.count > 40 {
+                let remain = String(cleaned.dropFirst(40)).trimmingCharacters(in: .whitespacesAndNewlines)
+                if !remain.isEmpty {
+                    return remain.count > 70 ? String(remain.prefix(70)) + "…" : remain
+                }
             }
         }
         return ""

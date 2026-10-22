@@ -178,7 +178,7 @@ final class SearchEngine {
             }
 
             // 4. 提取最佳命中段落（直接复用段落预计算向量，无需再次模型推理）
-            var bestParagraph = note.snippet.isEmpty ? (paragraphs.first?.text ?? "空白笔记") : note.snippet
+            var bestParagraph = note.snippet.isEmpty ? (paragraphs.first?.text ?? "") : note.snippet
             var bestParaScore = 0.0
 
             for paraItem in paragraphs {
