@@ -775,19 +775,58 @@ final class Store {
     /// 首次启动时种一条欢迎笔记，避免用户打开面板看到一片空白
     func seedIfEmpty() {
         guard listNotes().isEmpty else { return }
-        let id = UUID().uuidString.lowercased()
-        let welcome = """
-        # 欢迎使用 iFolo
 
-        把指针移到屏幕右边缘，或按 ⌥⌘N 呼出面板。
+        // 1. 快速上手指南（置顶）
+        let id1 = UUID().uuidString.lowercased()
+        let welcome1 = """
+        # 欢迎使用 iFolo · 快速上手指南
 
-        - [ ] 试试输入 `/` 唤出命令
-        - [inProgress] 悬停段落左侧能看到手柄
-        - [ ] 选中文字试试富文本工具栏
+        iFolo 是一款专为 macOS 设计的轻量级屏幕边缘笔记。
+
+        ### 核心操作
+        - **呼出面板**：指针移至屏幕最右侧边缘，或按快捷键 `⌥⌘N`
+        - **命令面板**：在任意输入框输入 `/` 查看可用指令（如 `/theme`, `/find`, `/todo`）
+        - **富文本格式**：选中文本自动浮现格式气泡菜单，支持加粗、高亮与行内代码
+        - **标签聚合**：在正文中输入 `#指南` 或 `#灵感`，系统会自动聚合标签
+
+        祝你在 iFolo 中拥有愉悦的记录体验！
         """
-        write(id: id, markdown: welcome)
-        setActive(id)
-        Log.write("已种入欢迎笔记 \(id)")
+        write(id: id1, markdown: welcome1)
+        setNotePinned(noteId: id1, pinned: true)
+
+        // 2. 待办清单与任务流转
+        let id2 = UUID().uuidString.lowercased()
+        let welcome2 = """
+        # 待办清单与任务流转
+
+        iFolo 原生支持多状态任务流转与待办聚合筛选。
+
+        ### 任务操作体验
+        - [x] 点击左侧复选框直接标记为「已完成」
+        - [inProgress] 点击可将状态推进到「进行中」
+        - [ ] 这是一个未开始的基础待办任务项
+
+        > 提示：按 `⌘T` 或输入 `/todo` 可以快速筛选全库所有带有待办项的笔记。
+        """
+        write(id: id2, markdown: welcome2)
+        setNoteFolder(noteId: id2, folderId: "todo")
+
+        // 3. 私密保险箱与硬件级加密
+        let id3 = UUID().uuidString.lowercased()
+        let welcome3 = """
+        # 私密保险箱与硬件级加密
+
+        iFolo 深度集成 Apple CryptoKit 硬件级 AES-256-GCM 安全加密体系。
+
+        ### 核心特性
+        - **数据保密**：加锁笔记未解锁前磁盘仅存放密文占位符，明文绝不泄露。
+        - **生物认证**：支持 Touch ID 指纹一键轻触解锁或系统密码认证。
+        - **即刻闭锁**：随时输入 `/lock` 或按快捷键 `⌥⌘L`，立即销毁内存解密密钥。
+        """
+        write(id: id3, markdown: welcome3)
+
+        setActive(id1)
+        Log.write("已成功种入 3 篇内置欢迎笔记")
     }
 
     // MARK: - 辅助

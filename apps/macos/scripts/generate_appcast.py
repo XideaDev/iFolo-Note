@@ -164,8 +164,27 @@ def build_appcast(
         print("  🚨 已标记为此版本为关键强制更新 (<sparkle:criticalUpdate />)")
 
     it_desc = ET.SubElement(new_item, "description")
-    it_desc.text = release_notes.strip() if release_notes else f"iFolo Note v{version} 稳定版更新"
-
+    if release_notes:
+        notes_clean = release_notes.replace("\\n", "\n").strip()
+        lines = [l.strip() for l in notes_clean.split("\n") if l.strip()]
+        if len(lines) > 1:
+            header = lines[0]
+            items = []
+            for l in lines[1:]:
+                item_text = l.lstrip("•- \t")
+                if "：" in item_text:
+                    k, v = item_text.split("：", 1)
+                    items.append(f"<li><b>{k}</b>：{v}</li>")
+                elif ":" in item_text:
+                    k, v = item_text.split(":", 1)
+                    items.append(f"<li><b>{k}</b>：{v}</li>")
+                else:
+                    items.append(f"<li>{item_text}</li>")
+            it_desc.text = f"<p><b>{header}</b></p><ul>{''.join(items)}</ul>"
+        else:
+            it_desc.text = notes_clean
+    else:
+        it_desc.text = f"iFolo Note v{version} 稳定版更新"
     for enc in enclosures:
         ET.SubElement(new_item, "enclosure", {
             "url": enc["url"],
