@@ -25,8 +25,7 @@ final class EdgeTrigger {
     private var monitor: Any?
     private var dwellTimer: Timer?
     private var armed = true
-    private var screenObserver: NSObjectProtocol?
-    private var spaceObserver: NSObjectProtocol?
+    private var observers: [NSObjectProtocol] = []
     private var pollTimer: Timer?
     private(set) var isPaused = false
 
@@ -51,24 +50,39 @@ final class EdgeTrigger {
         armed = true
 
         updateScreenCache()
-        screenObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        let nc = NotificationCenter.default
+        let wsNc = NSWorkspace.shared.notificationCenter
+
+        let o1 = nc.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             self?.updateScreenCache()
         }
-        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        let o2 = wsNc.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
             self.cancelDwell()
             self.armed = true
+            self.isPaused = false
             self.updateScreenCache()
             Log.write("桌面空间变更，边缘触发缓存已同步刷新")
         }
+        let o3 = wsNc.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            Log.write("系统从休眠中唤醒，自愈重建边缘触发通道")
+            self.cancelDwell()
+            self.isPaused = false
+            self.armed = true
+            self.updateScreenCache()
+            self.restartPollTimer()
+        }
+        let o4 = wsNc.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self else { return }
+            Log.write("屏幕亮屏唤醒，自愈重建边缘触发通道")
+            self.cancelDwell()
+            self.isPaused = false
+            self.armed = true
+            self.updateScreenCache()
+            self.restartPollTimer()
+        }
+        observers = [o1, o2, o3, o4]
         // 全局监听不会收到发给本 App 的事件，所以面板内的移动天然被忽略
         // 1. 全局鼠标移动监听
         monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
@@ -96,14 +110,11 @@ final class EdgeTrigger {
             NSEvent.removeMonitor(monitor)
             self.monitor = nil
         }
-        if let screenObserver {
-            NotificationCenter.default.removeObserver(screenObserver)
-            self.screenObserver = nil
+        for obs in observers {
+            NotificationCenter.default.removeObserver(obs)
+            NSWorkspace.shared.notificationCenter.removeObserver(obs)
         }
-        if let spaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
-            self.spaceObserver = nil
-        }
+        observers.removeAll()
         pollTimer?.invalidate()
         pollTimer = nil
         cancelDwell()
@@ -179,6 +190,12 @@ final class EdgeTrigger {
     }
 
     private func evaluate() {
+        // 自愈看门狗：如果面板客观上处于关闭状态，但 isPaused 仍被卡死为 true，强制自愈恢复！
+        if isPaused && !PanelController.shared.isVisible {
+            isPaused = false
+            armed = true
+        }
+
         // 0. 用户配置短路：若用户关闭了边缘贴靠触发（默认开启 true），直接跳过
         let enabled = UserDefaults.standard.object(forKey: "ifolo.edgeHover") as? Bool ?? true
         guard enabled else {
@@ -252,5 +269,15 @@ final class EdgeTrigger {
     private func cancelDwell() {
         dwellTimer?.invalidate()
         dwellTimer = nil
+    }
+
+    private func restartPollTimer() {
+        pollTimer?.invalidate()
+        let pollInterval = min(0.1, max(0.04, self.dwell / 2.0))
+        let pTimer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in
+            self?.evaluate()
+        }
+        RunLoop.main.add(pTimer, forMode: .common)
+        pollTimer = pTimer
     }
 }

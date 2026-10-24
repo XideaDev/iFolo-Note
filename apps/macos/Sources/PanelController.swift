@@ -10,7 +10,7 @@ final class PanelController: NSObject, WKUIDelegate {
     private var webView: WKWebView?
     private var outsideMonitor: Any?
     private var installOutsideTask: DispatchWorkItem?
-    private var spaceObserver: NSObjectProtocol?
+    private var observers: [NSObjectProtocol] = []
     /// 计算当前允许的最大宽度（分屏能力上限提升到 62% 屏宽，至少 900pt，上限 1200pt）
     func maxAllowedWidth(on screen: NSScreen? = nil) -> CGFloat {
         let scr = screen ?? targetScreen()
@@ -49,18 +49,48 @@ final class PanelController: NSObject, WKUIDelegate {
 
     private override init() {
         super.init()
-        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+        let nc = NSWorkspace.shared.notificationCenter
+        let obs1 = nc.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             self?.handleSpaceChange()
         }
+        let obs2 = nc.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Log.write("系统从休眠中唤醒，自愈刷新面板状态")
+            self?.handleWake()
+        }
+        let obs3 = nc.addObserver(
+            forName: NSWorkspace.screensDidWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Log.write("屏幕亮屏唤醒，自愈刷新面板状态")
+            self?.handleWake()
+        }
+        observers = [obs1, obs2, obs3]
     }
 
     deinit {
-        if let spaceObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver)
+        for obs in observers {
+            NSWorkspace.shared.notificationCenter.removeObserver(obs)
+        }
+    }
+
+    private func handleWake() {
+        guard let panel else { return }
+        if panel.isVisible {
+            reposition(panel)
+            panel.orderFrontRegardless()
+            scheduleOutsideMonitor()
+            takeKey()
+        } else {
+            EdgeTrigger.shared.resume()
         }
     }
 
@@ -264,7 +294,15 @@ final class PanelController: NSObject, WKUIDelegate {
             if let panel = self.panel {
                 let loc = NSEvent.mouseLocation
                 if panel.frame.contains(loc) { return }
-                if let scr = panel.screen, loc.y >= (scr.frame.maxY - 32) && loc.x >= (scr.frame.maxX - 200) {
+
+                // 精准豁免 1：如果点击命中状态栏按钮物理区域（外扩 12pt 容差），绝对不关闭面板
+                if let btnFrame = StatusItem.shared?.statusButtonFrame() {
+                    let expanded = btnFrame.insetBy(dx: -12, dy: -8)
+                    if expanded.contains(loc) { return }
+                }
+
+                // 精准豁免 2：如果点击位于屏幕最顶部 36pt 菜单栏条带内，不触发外部收起
+                if let scr = panel.screen, loc.y >= (scr.frame.maxY - 36) {
                     return
                 }
             }

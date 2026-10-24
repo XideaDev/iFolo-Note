@@ -4,11 +4,12 @@ import AppKit
 ///
 /// 用 `NSStatusItem` 而不是 SwiftUI 的 `MenuBarExtra` —— 后者无法区分图标的左键和右键，
 /// 而菜单栏工具的惯例是「左键开面板，右键出菜单」。
-final class StatusItem: NSObject {
+final class StatusItem: NSObject, NSMenuDelegate {
     static var shared: StatusItem?
 
     private let item: NSStatusItem
     private let menu = NSMenu()
+    private var lastClickTime: TimeInterval = 0
 
     override init() {
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -25,10 +26,20 @@ final class StatusItem: NSObject {
             button.toolTip = "iFolo · 屏幕边缘笔记"
             button.target = self
             button.action = #selector(handleClick)
-            // 左右键都要收到
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            if let window = button.window {
+                // 必须声明全桌面集合行为，否则切桌面或全屏应用时此窗口 isOnActiveSpace 会变成 NO 导致点击被系统丢弃
+                window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
+            }
         }
+        menu.delegate = self
         buildMenu()
+    }
+
+    /// 获取状态栏图标按钮在屏幕上的真实物理几何矩形（用于外部点击检测精确豁免）
+    func statusButtonFrame() -> NSRect? {
+        guard let button = item.button, let window = button.window else { return nil }
+        return window.convertToScreen(button.frame)
     }
 
     /// 图标生成器：支持 4 款视觉尺寸、线条粗细与随身便签完全一致的标准菜单栏图标
@@ -233,16 +244,26 @@ final class StatusItem: NSObject {
         if isRightClick, let button = item.button {
             buildMenu()
             Log.write("右键：弹出菜单")
-            let wasEdgePaused = EdgeTrigger.shared.isPaused
             EdgeTrigger.shared.pause()
             item.popUpMenu(menu)
             button.isHighlighted = false
-            if !wasEdgePaused && !PanelController.shared.isVisible {
-                EdgeTrigger.shared.resume()
-            }
         } else {
+            let now = Date().timeIntervalSince1970
+            if now - lastClickTime < 0.18 {
+                Log.write("左键：连击防抖过滤")
+                return
+            }
+            lastClickTime = now
             Log.write("左键：切换面板")
             PanelController.shared.toggle()
+        }
+    }
+
+    // MARK: - NSMenuDelegate (菜单关闭后安全解除暂停)
+
+    func menuDidClose(_ menu: NSMenu) {
+        if !PanelController.shared.isVisible {
+            EdgeTrigger.shared.resume()
         }
     }
 
