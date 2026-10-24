@@ -190,7 +190,10 @@ final class MCPServer {
                     tools: ["listChanged": false],
                     prompts: ["listChanged": false]
                 ),
-                serverInfo: MCPServerInfo(name: "ifolo-mcp", version: "0.3.1")
+                serverInfo: MCPServerInfo(
+                    name: "ifolo-mcp",
+                    version: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+                )
             )
             responseData = encodeResponse(id: id, result: result)
 
