@@ -7,6 +7,7 @@ import AppKit
 @main
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    private static var strongDelegate: AppDelegate?
     private var statusItem: StatusItem?
     private var edgeTrigger: EdgeTrigger?
     private var hotKeys: [HotKey] = []
@@ -26,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let app = NSApplication.shared
         // NSApplication.delegate 是 weak，必须自己持有强引用
         let delegate = AppDelegate()
+        strongDelegate = delegate
         app.delegate = delegate
         app.setActivationPolicy(.accessory)
         setupMainMenu()

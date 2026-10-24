@@ -66,28 +66,26 @@ final class EdgeTrigger {
         }
         let o3 = wsNc.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
-            Log.write("系统从休眠中唤醒，自愈重建边缘触发通道")
+            Log.write("系统从休眠中唤醒，自愈重建边缘触发通道与事件监听器")
             self.cancelDwell()
             self.isPaused = false
             self.armed = true
             self.updateScreenCache()
+            self.restartGlobalMonitor()
             self.restartPollTimer()
         }
         let o4 = wsNc.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [weak self] _ in
             guard let self else { return }
-            Log.write("屏幕亮屏唤醒，自愈重建边缘触发通道")
+            Log.write("屏幕亮屏唤醒，自愈重建边缘触发通道与事件监听器")
             self.cancelDwell()
             self.isPaused = false
             self.armed = true
             self.updateScreenCache()
+            self.restartGlobalMonitor()
             self.restartPollTimer()
         }
         observers = [o1, o2, o3, o4]
-        // 全局监听不会收到发给本 App 的事件，所以面板内的移动天然被忽略
-        // 1. 全局鼠标移动监听
-        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
-            self?.evaluate()
-        }
+        restartGlobalMonitor()
 
         // 从 UserDefaults 读取用户配置的悬停等待时长（默认 0.15s，范围 0.05s ~ 2.0s）
         let savedDelay = UserDefaults.standard.object(forKey: "ifolo.edgeHoverDelay") as? Double ?? 0.15
@@ -190,20 +188,20 @@ final class EdgeTrigger {
     }
 
     private func evaluate() {
-        // 自愈看门狗：如果面板客观上处于关闭状态，但 isPaused 仍被卡死为 true，强制自愈恢复！
+        // 自愈看门狗：若面板客观未显示，强制自愈解除 isPaused 与 armed
         if isPaused && !PanelController.shared.isVisible {
             isPaused = false
             armed = true
         }
 
-        // 0. 用户配置短路：若用户关闭了边缘贴靠触发（默认开启 true），直接跳过
+        // 0. 用户配置短路
         let enabled = UserDefaults.standard.object(forKey: "ifolo.edgeHover") as? Bool ?? true
         guard enabled else {
             if dwellTimer != nil { cancelDwell() }
             return
         }
 
-        // 1. 状态短路：如果已暂停或面板处于可见状态，直接跳过
+        // 1. 状态短路：已暂停或面板已打开时退出
         guard !isPaused, !PanelController.shared.isVisible else {
             if dwellTimer != nil { cancelDwell() }
             return
@@ -211,26 +209,20 @@ final class EdgeTrigger {
 
         let location = NSEvent.mouseLocation
 
-        // 2. 自愈死锁保障：若面板已关闭且处于非热区，确保 armed 准星复位
-        if location.x < minZoneX {
-            if dwellTimer != nil { cancelDwell() }
-            armed = true
-            return
-        }
-
-        // 3. 精筛：从缓存的触发区检测，零 IPC、零内存分配
+        // 2. 精确多屏幕几何检测（彻底废弃粗暴提前截断的 minZoneX 陷阱）
         var inZone = false
         var inHysteresisZone = false
+
         for zone in cachedZones {
             if zone.triggerRect.contains(location) {
                 inZone = true
                 break
             }
-            // 滞回容差区：已进入热区后，允许手部向左微抖 16pt 而不重置计时器
+            // 滞回容差区：进入热区后，允许手部向左微抖 24pt 而不掐死计时器
             let hysteresisRect = NSRect(
-                x: zone.triggerRect.minX - 16,
+                x: zone.triggerRect.minX - 24,
                 y: zone.triggerRect.minY,
-                width: zone.triggerRect.width + 16,
+                width: zone.triggerRect.width + 24,
                 height: zone.triggerRect.height
             )
             if hysteresisRect.contains(location) {
@@ -242,7 +234,7 @@ final class EdgeTrigger {
             guard armed else { return }
             startDwell()
         } else if inHysteresisZone && dwellTimer != nil {
-            // 处在滞回缓冲区且计时器正在跑，不打断用户动作
+            // 处在滞回缓冲区且计时器正在跑，不重置、不打断，平稳等待触发
             return
         } else {
             cancelDwell()
@@ -269,6 +261,16 @@ final class EdgeTrigger {
     private func cancelDwell() {
         dwellTimer?.invalidate()
         dwellTimer = nil
+    }
+    private func restartGlobalMonitor() {
+        if let monitor {
+            NSEvent.removeMonitor(monitor)
+            self.monitor = nil
+        }
+        // 重新挂载全局鼠标事件，解决长时间休眠或安全会话切换后 WindowServer event tap 失效问题
+        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]) { [weak self] _ in
+            self?.evaluate()
+        }
     }
 
     private func restartPollTimer() {

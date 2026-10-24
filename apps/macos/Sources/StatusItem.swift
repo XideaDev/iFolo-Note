@@ -237,9 +237,13 @@ final class StatusItem: NSObject, NSMenuDelegate {
     // MARK: - 点击
 
     @objc private func handleClick() {
+        // 强行前台激活：解决多桌面或全屏应用切换后系统 WindowServer 阻断 accessory 进程事件路由的问题
+        NSApp.activate(ignoringOtherApps: true)
+
         let event = NSApp.currentEvent
         let isRightClick = event?.type == .rightMouseUp
             || event?.modifierFlags.contains(.control) == true
+            || (NSEvent.pressedMouseButtons & (1 << 1) != 0)
 
         if isRightClick, let button = item.button {
             buildMenu()
