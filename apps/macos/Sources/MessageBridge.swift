@@ -11,6 +11,13 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
 
     static let shared = MessageBridge()
 
+    private static let buildDateFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        df.timeZone = TimeZone.current
+        return df
+    }()
+
     private override init() { super.init() }
 
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -37,7 +44,25 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
             }
             let content = activeId.map { store.read(id: $0) } ?? ""
             let activeValue: Any = activeId ?? NSNull()
+            var bDate = ""
+            if let execURL = Bundle.main.executableURL,
+               let vals = try? execURL.resourceValues(forKeys: [.contentModificationDateKey]),
+               let modDate = vals.contentModificationDate {
+                bDate = Self.buildDateFormatter.string(from: modDate)
+            }
+            #if arch(arm64)
+            let archName = "arm64"
+            #elseif arch(x86_64)
+            let archName = "x86_64"
+            #else
+            let archName = "universal"
+            #endif
+
             reply(id, ok: true, payload: [
+                "appVersion": Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0",
+                "appBuild": Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1",
+                "appBuildDate": bDate,
+                "appArch": archName,
                 "notes": notes.map { [
                     "id": $0.id,
                     "title": $0.title,
@@ -184,6 +209,15 @@ final class MessageBridge: NSObject, WKScriptMessageHandler {
             NSWorkspace.shared.open(Store.shared.notesDirectoryURL)
             reply(id, ok: true, payload: NSNull())
 
+        case "openLogs":
+            let logURL = URL(fileURLWithPath: NSString(string: "~/Library/Logs/iFolo.log").expandingTildeInPath)
+            if FileManager.default.fileExists(atPath: logURL.path) {
+                NSWorkspace.shared.activateFileViewerSelecting([logURL])
+            } else {
+                let logsDir = URL(fileURLWithPath: NSString(string: "~/Library/Logs").expandingTildeInPath)
+                NSWorkspace.shared.open(logsDir)
+            }
+            reply(id, ok: true, payload: NSNull())
         case "openTrash":
             let trashURL = FileManager.default.urls(for: .trashDirectory, in: .userDomainMask).first ?? URL(fileURLWithPath: NSString(string: "~/.Trash").expandingTildeInPath)
             NSWorkspace.shared.open(trashURL)

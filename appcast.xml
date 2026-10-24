@@ -7,6 +7,16 @@
         <language>zh-CN</language>
         <item>
             <title>iFolo Note v1.0.0</title>
+            <pubDate>Sat, 24 Oct 2026 15:17:02 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>&lt;p&gt;&lt;b&gt;系统级休眠与边缘贴靠加固&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;修复边缘触发热区滞回容差提前中断计时的缺陷，保证边缘贴边呼出顺畅&lt;/li&gt;&lt;li&gt;监听系统深度休眠与屏幕唤醒通知生命周期，自动重连 Event Tap，根治息屏唤醒后手势失灵&lt;/li&gt;&lt;li&gt;固化 AppDelegate 静态强引用常驻生命周期，消除长时间后台运行被异常回收的风险&lt;/li&gt;&lt;li&gt;新增 openLogs 原生桥接，支持在访达中一键定位本地日志；动态同步宿主编译时间与架构&lt;/li&gt;&lt;/ul&gt;</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b10-arm64.dmg" length="3068281" type="application/octet-stream" sparkle:edSignature="cHlP47dTSaLr5+yQxgUNp1+u2huN4QvxjKgHJn5rSdTeGYe055ntC1Li3KjCSUPC7aA2rYwU5Uk9Qwkq7nn6Dg==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b10-x86_64.dmg" length="3092351" type="application/octet-stream" sparkle:edSignature="m1XJQy4X8iKWRBKPPBuyt/rs6SXufxQouzdAiJPOB7XKwlz24V5QoL/7VlCpTHK7R1VIaj1IbNdMvQZQ5HhPDg==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+        <item>
+            <title>iFolo Note v1.0.0</title>
             <pubDate>Sat, 24 Oct 2026 01:18:17 +0000</pubDate>
             <sparkle:version>9</sparkle:version>
             <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
