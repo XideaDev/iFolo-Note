@@ -11,7 +11,7 @@
             <sparkle:version>9</sparkle:version>
             <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description>&lt;p&gt;&lt;b&gt;DMG 安装向导升级为复古纸质触感设计，精致卡片底座与动效指引&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;根治多虚拟桌面与全屏切换后状态栏与边缘触发失灵的系统级死锁问题&lt;/li&gt;&lt;li&gt;移除未使用的遥测配置，设置页底部版本号动态同步原生版本与构建号&lt;/li&gt;&lt;li&gt;修复选区浮动工具栏离开编辑器时残留的缺陷，并在外观设置提供开关&lt;/li&gt;&lt;/ul&gt;</description>
+            <description>&lt;p&gt;&lt;b&gt;DMG 安装向导升级为复古纸质触感设计，精致卡片底座与动效指引&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;根治多虚拟桌面与全屏切换后状态栏与边缘触发失灵的系统级死锁问题&lt;/li&gt;&lt;li&gt;精简偏好设置面板，设置页底端版本号实现原生版本与构建号动态同步&lt;/li&gt;&lt;li&gt;修复选区浮动工具栏离开编辑器时残留的缺陷，并在外观设置提供开关&lt;/li&gt;&lt;/ul&gt;</description>
             <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b9-arm64.dmg" length="3067860" type="application/octet-stream" sparkle:edSignature="WBX+nhdzmzhD9NUME64jHmvqA6jQdBiNiSnYp9VHuO8pI1BwuOlvrQXODjT41dkAtQWu+SH9OJtqTN3n8LcOCQ==" sparkle:os="macos" sparkle:cpu="arm64"/>
             <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.0/iFolo-1.0.0-b9-x86_64.dmg" length="3091464" type="application/octet-stream" sparkle:edSignature="rL+0i+oRBNgTpIbQHlIIQaEXFBlYyvBWRZXj2RqQ9HXQ0PzIQxX6Zow/MnGKiShVHp/qjVOBM8lMCiTs+a5RAQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
         </item>
