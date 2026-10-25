@@ -6,6 +6,16 @@
         <description>iFolo Note macOS 最新版本与安全修复发布频道</description>
         <language>zh-CN</language>
         <item>
+            <title>iFolo Note v1.0.1</title>
+            <pubDate>Sun, 25 Oct 2026 03:22:48 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description>&lt;p&gt;&lt;b&gt;1. 移除分屏幽灵提示：彻底移除大屏分屏与命令搜索时出现的重复黄色提示横条（Ghost Hint），消除输入 / 命令面板时的误报提示，保持专注纯粹的沉浸式心流体验。&lt;/b&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;&lt;b&gt;2. 分屏与搜索体验纯净化&lt;/b&gt;：精简分屏工作区 DOM 层级与样式开销，使搜索过滤与正文编辑同屏对照时更为清爽利落。&lt;/li&gt;&lt;li&gt;&lt;b&gt;3. 稳定性与细节优化&lt;/b&gt;：优化模块间状态通信，保证在多桌面与分屏切换下的流畅响应与零冗余渲染。&lt;/li&gt;&lt;/ul&gt;</description>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.1/iFolo-1.0.1-b10-arm64.dmg" length="3008147" type="application/octet-stream" sparkle:edSignature="KD/027/CYDiiwNC6XKNFwS5ENeUy7n3y88xlY0hlxHbISDr0TyJTclq5tJdRkbn6LJDM8tifyDWtCimkf4xFAg==" sparkle:os="macos" sparkle:cpu="arm64"/>
+            <enclosure url="https://github.com/XideaDev/iFolo-Note/releases/download/v1.0.1/iFolo-1.0.1-b10-x86_64.dmg" length="3032392" type="application/octet-stream" sparkle:edSignature="N5dvmooXT2QH3dnckVfuwvMIgZ1Jjl0tHFaudA5GaywlkFXtPtFeuXAaCIGMUc50bF50Yi4vdNc0eSgmgioDDQ==" sparkle:os="macos" sparkle:cpu="x86_64"/>
+        </item>
+        <item>
             <title>iFolo Note v1.0.0</title>
             <pubDate>Sat, 24 Oct 2026 15:17:02 +0000</pubDate>
             <sparkle:version>10</sparkle:version>
